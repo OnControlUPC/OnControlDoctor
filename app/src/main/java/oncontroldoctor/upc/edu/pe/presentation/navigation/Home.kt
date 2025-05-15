@@ -26,6 +26,7 @@ import oncontroldoctor.upc.edu.pe.presentation.view.CalendarView
 import oncontroldoctor.upc.edu.pe.presentation.view.ChatView
 import oncontroldoctor.upc.edu.pe.presentation.view.MessageListView
 import oncontroldoctor.upc.edu.pe.presentation.view.NotificationView
+import oncontroldoctor.upc.edu.pe.presentation.view.PatientDashboardView
 import oncontroldoctor.upc.edu.pe.presentation.view.PatientListView
 
 @Composable
@@ -104,6 +105,14 @@ fun Home() {
                     navController.popBackStack()
                 }
             }
+            composable("patientDashboard/{patientId}") { backStackEntry ->
+                val patientId = backStackEntry.arguments?.getString("patientId")?.toIntOrNull() ?: return@composable
+                PatientDashboardView(
+                    patientId = patientId,
+                    onNavigate = { route -> navController.navigate(route) }
+                )
+            }
+
             composable("Messages")
             {
                 MessageListView { chatId ->
