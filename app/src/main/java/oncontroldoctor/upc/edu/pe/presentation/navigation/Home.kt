@@ -13,7 +13,7 @@ import androidx.compose.material3.Text
 import androidx.navigation.compose.NavHost
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,6 +21,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import oncontroldoctor.upc.edu.pe.presentation.view.CalendarView
+import oncontroldoctor.upc.edu.pe.presentation.view.ChatView
+import oncontroldoctor.upc.edu.pe.presentation.view.MessageListView
+import oncontroldoctor.upc.edu.pe.presentation.view.NotificationView
 import oncontroldoctor.upc.edu.pe.presentation.view.PatientListView
 
 @Composable
@@ -53,7 +57,7 @@ fun Home() {
     )
 
     val selectedIndex = remember {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
     Scaffold(
@@ -61,12 +65,12 @@ fun Home() {
             NavigationBar {
                 navigationItems.forEachIndexed { index, item ->
                     NavigationBarItem(
-                        selected = selectedIndex.value == index,
+                        selected = selectedIndex.intValue == index,
                         icon = {
                             Icon(item.icon, contentDescription = null)
                         },
                         onClick = {
-                            selectedIndex.value = index
+                            selectedIndex.intValue = index
                             navController.navigate(item.route)
                         },
                         label = {
@@ -90,11 +94,21 @@ fun Home() {
             }
             composable("Messages")
             {
-
+                MessageListView { chatId ->
+                    navController.navigate("chat/$chatId")
+                }
+            }
+            composable("chat/{chatId}") { backStackEntry ->
+                val chatId = backStackEntry.arguments?.getString("chatId")?.toIntOrNull() ?: return@composable
+                ChatView(chatId = chatId)
             }
             composable("Calendar")
             {
-
+                CalendarView()
+            }
+            composable("Notifications")
+            {
+                NotificationView()
             }
         }
 
