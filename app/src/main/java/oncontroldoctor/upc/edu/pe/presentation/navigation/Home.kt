@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import oncontroldoctor.upc.edu.pe.presentation.view.AddPatientView
 import oncontroldoctor.upc.edu.pe.presentation.view.CalendarView
 import oncontroldoctor.upc.edu.pe.presentation.view.ChatView
 import oncontroldoctor.upc.edu.pe.presentation.view.MessageListView
@@ -86,10 +87,21 @@ fun Home() {
             startDestination = "Patients",
             modifier = Modifier.padding(padding)
         ) {
-            composable("Patients")
-            {
-                PatientListView(viewModel = viewModel()) { patientId ->
-                    navController.navigate("patientDashboard/$patientId")
+            composable("Patients") {
+                PatientListView(
+                    viewModel = viewModel(),
+                    onPatientClick = { patientId ->
+                        navController.navigate("patientDashboard/$patientId")
+                    },
+                    onAddPatientClick = {
+                        navController.navigate("addPatient")
+                    }
+                )
+            }
+            composable("addPatient") {
+                AddPatientView { dni ->
+                    println("Solicitud enviada al DNI: $dni")
+                    navController.popBackStack()
                 }
             }
             composable("Messages")
