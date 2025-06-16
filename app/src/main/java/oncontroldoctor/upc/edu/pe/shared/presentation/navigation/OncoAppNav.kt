@@ -22,6 +22,7 @@ import oncontroldoctor.upc.edu.pe.billing.domain.usecase.UseSubscriptionKeyUseCa
 import oncontroldoctor.upc.edu.pe.billing.domain.usecase.ValidateSubscriptionKeyUseCase
 import oncontroldoctor.upc.edu.pe.billing.presentation.view.BillingScreen
 import oncontroldoctor.upc.edu.pe.billing.presentation.viewmodel.BillingViewModel
+import oncontroldoctor.upc.edu.pe.home.presentation.view.HomeScreen
 import oncontroldoctor.upc.edu.pe.profile.presentation.view.CompleteProfileEntry
 import oncontroldoctor.upc.edu.pe.profile.presentation.view.CompleteProfileScreen
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants.BASE_URL
@@ -145,7 +146,7 @@ fun OncoAppNav(startDestination: Boolean) {
                     popUpTo(0)
                 }
             }) {
-                Text("Cerrar sesión")
+                HomeScreen()
             }
         }
 
