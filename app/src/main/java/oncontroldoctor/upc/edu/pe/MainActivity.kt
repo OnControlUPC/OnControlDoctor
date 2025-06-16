@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import oncontroldoctor.upc.edu.pe.presentation.navigation.Home
+import androidx.compose.runtime.remember
+import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionManager
+import oncontroldoctor.upc.edu.pe.shared.presentation.navigation.OncoAppNav
 import oncontroldoctor.upc.edu.pe.ui.theme.OnControlDoctorTheme
 
 class MainActivity : ComponentActivity() {
@@ -12,8 +14,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            OnControlDoctorTheme {
-                Home()
+            OnControlDoctorTheme(dynamicColor = false) {
+                val sessionManager = remember { SessionManager(applicationContext) }
+                val hasToken = sessionManager.getToken() != null
+                OncoAppNav(startDestination = hasToken)
             }
         }
     }

@@ -4,7 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     //ksp
-    alias(libs.plugins.ksp)
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -59,7 +60,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
+    implementation(libs.ucrop)
 
     //Dependencies
     implementation(libs.retrofit)
@@ -69,7 +70,9 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.navigation.compose)
-    ksp(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.hilt.android.v2562)
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
 }
