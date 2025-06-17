@@ -139,15 +139,7 @@ fun OncoAppNav(startDestination: Boolean) {
         }
 
         composable("home") {
-            val context = LocalContext.current
-            Button(onClick = {
-                SessionManager(context).clearSession()
-                navController.navigate("login") {
-                    popUpTo(0)
-                }
-            }) {
-                HomeScreen()
-            }
+            HomeScreen()
         }
 
     }

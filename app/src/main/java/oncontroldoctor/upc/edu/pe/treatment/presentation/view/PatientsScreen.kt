@@ -12,6 +12,11 @@ import androidx.compose.ui.unit.dp
 import oncontroldoctor.upc.edu.pe.treatment.data.model.DoctorPatientLinkDto
 import oncontroldoctor.upc.edu.pe.treatment.data.model.PatientDto
 import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.TreatmentViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+
 
 @Composable
 fun PatientsScreen(
@@ -33,14 +38,23 @@ fun PatientsScreen(
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = {
-                searchQuery = it
-                if (it.text.isNotBlank()) {
-                    viewModel.searchPatients(token, it.text)
-                }
-            },
+            onValueChange = { searchQuery = it },
             label = { Text("Buscar paciente") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        if (searchQuery.text.isNotBlank()) {
+                            viewModel.searchPatients(token, searchQuery.text)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Buscar paciente"
+                    )
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -48,11 +62,34 @@ fun PatientsScreen(
         if (searchQuery.text.isBlank()) {
             Text("Pacientes vinculados", style = MaterialTheme.typography.titleMedium)
             LazyColumn {
-                items(linkedPatients.filter { it.status == "ACTIVE" }) { link ->
-                    Text("- ${link.patientFullName}")
+                items(linkedPatients.filter { it.status in listOf("ACCEPTED", "ACTIVE", "PENDING") }) { link ->
+                    val statusColor = when (link.status) {
+                        "ACCEPTED" -> MaterialTheme.colorScheme.primary
+                        "ACTIVE" -> MaterialTheme.colorScheme.tertiary
+                        "PENDING" -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "- ${link.patientFullName}",
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = link.status,
+                            color = statusColor,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                     Divider()
                 }
             }
+
         } else {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))

@@ -12,9 +12,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionManager
+import oncontroldoctor.upc.edu.pe.authentication.presentation.PresentationModule
+import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientsScreen
+import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.TreatmentViewModel
 
 data class NavigationItem(
     val icon: ImageVector,
@@ -25,6 +30,15 @@ data class NavigationItem(
 @Composable
 fun HomeScreen() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+
+    // Obtén token y doctorUuid desde SessionManager
+    val token = remember { SessionManager(context).getToken() ?: "" }
+    val doctorUuid = remember { SessionManager(context).getUuid() ?: "" }
+
+    // ViewModel
+    val treatmentViewModel = remember { PresentationModule.getTreatmentViewModel() }
+
     val navigationItems = listOf(
         NavigationItem(Icons.Default.Face, "Pacientes", "Patients"),
         NavigationItem(Icons.Default.Email, "Mensajes", "Messages"),
@@ -56,14 +70,17 @@ fun HomeScreen() {
             navController = navController,
             startDestination = "Patients",
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
+                .padding(innerPadding)
         ) {
             composable("Patients") {
-                Text("Pacientes", modifier = Modifier.fillMaxSize())
+                PatientsScreen(
+                    viewModel = treatmentViewModel,
+                    doctorUuid = doctorUuid,
+                    token = token
+                )
             }
             composable("Messages") {
-                // Ejemplo para evitar espacios vacíos
                 Text("Mensajes", modifier = Modifier.fillMaxSize())
             }
             composable("Calendar") {

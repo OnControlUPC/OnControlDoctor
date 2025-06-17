@@ -11,6 +11,9 @@ import oncontroldoctor.upc.edu.pe.treatment.data.model.PatientDto
 import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.GetDoctorPatientsUseCase
 import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.LinkDoctorPatientUseCase
 import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.SearchPatientsUseCase
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+
 
 class TreatmentViewModel(
     private val searchPatientsUseCase: SearchPatientsUseCase,
@@ -30,10 +33,15 @@ class TreatmentViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    fun resetLinkSuccessFlag() {
+        _isLinkSuccessful.value = null
+    }
+
     fun searchPatients(token: String, query: String) {
         _isLoading.value = true
+        _patients.value = emptyList()
         viewModelScope.launch {
-            val response = searchPatientsUseCase(token, query)
+            val response = searchPatientsUseCase("Bearer $token", query)
             _isLoading.value = false
             if (response.isSuccessful) {
                 _patients.value = response.body() ?: emptyList()
@@ -44,21 +52,26 @@ class TreatmentViewModel(
     fun linkDoctorWithPatient(token: String, doctorUuid: String, patientUuid: String) {
         val request = DoctorPatientLinkRequestDto(doctorUuid, patientUuid)
         viewModelScope.launch {
-            val response = linkDoctorPatientUseCase(token, request)
+            val response = linkDoctorPatientUseCase("Bearer $token", request)
             _isLinkSuccessful.value = response.isSuccessful
         }
     }
 
     fun loadDoctorLinkedPatients(token: String, doctorUuid: String) {
         viewModelScope.launch {
-            val response = getDoctorPatientsUseCase(token, doctorUuid)
-            if (response.isSuccessful) {
-                _linkedPatients.value = response.body() ?: emptyList()
+            val statuses = listOf("ACCEPTED", "ACTIVE", "PENDING")
+            val responses = statuses.map { status ->
+                async {
+                    getDoctorPatientsUseCase("Bearer $token", doctorUuid, status)
+                }
             }
+
+            val results = responses.awaitAll()
+                .filter { it.isSuccessful }
+                .flatMap { it.body() ?: emptyList() }
+
+            _linkedPatients.value = results
         }
     }
 
-    fun resetLinkSuccessFlag() {
-        _isLinkSuccessful.value = null
-    }
 }

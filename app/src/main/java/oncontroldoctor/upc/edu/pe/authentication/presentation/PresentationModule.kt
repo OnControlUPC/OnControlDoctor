@@ -16,6 +16,12 @@ import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorUuidUseCase
 import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.CompleteProfileViewModel
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants.BASE_URL
+import oncontroldoctor.upc.edu.pe.treatment.data.remote.TreatmentService
+import oncontroldoctor.upc.edu.pe.treatment.data.repository.TreatmentRepositoryImpl
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.GetDoctorPatientsUseCase
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.LinkDoctorPatientUseCase
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.SearchPatientsUseCase
+import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.TreatmentViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -65,4 +71,23 @@ object PresentationModule {
             .create(ProfileService::class.java)
     }
 
+    fun getTreatmentViewModel(): TreatmentViewModel {
+        val treatmentService = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TreatmentService::class.java)
+
+        val treatmentRepository = TreatmentRepositoryImpl(treatmentService)
+
+        val searchPatientsUseCase = SearchPatientsUseCase(treatmentRepository)
+        val linkDoctorPatientUseCase = LinkDoctorPatientUseCase(treatmentRepository)
+        val getDoctorPatientsUseCase = GetDoctorPatientsUseCase(treatmentRepository)
+
+        return TreatmentViewModel(
+            searchPatientsUseCase,
+            linkDoctorPatientUseCase,
+            getDoctorPatientsUseCase
+        )
+    }
 }

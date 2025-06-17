@@ -18,7 +18,7 @@ class TreatmentRepositoryImpl(
         return service.linkDoctorPatient(token, request)
     }
 
-    override suspend fun getDoctorPatients(token: String, doctorUuid: String): Response<List<DoctorPatientLinkDto>> {
-        return service.getDoctorPatients(token, doctorUuid)
+    override suspend fun getDoctorPatients(token: String, doctorUuid: String, status: String): Response<List<DoctorPatientLinkDto>> {
+        return service.getDoctorPatients(token, doctorUuid, status)
     }
 }
