@@ -3,6 +3,8 @@ package oncontroldoctor.upc.edu.pe.treatment.data.remote
 import oncontroldoctor.upc.edu.pe.treatment.data.model.DoctorPatientLinkDto
 import oncontroldoctor.upc.edu.pe.treatment.data.model.DoctorPatientLinkRequestDto
 import oncontroldoctor.upc.edu.pe.treatment.data.model.PatientDto
+import oncontroldoctor.upc.edu.pe.treatment.data.model.TreatmentDto
+import oncontroldoctor.upc.edu.pe.treatment.data.model.TreatmentRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -33,9 +35,28 @@ interface TreatmentService {
         @Query("status") status: String
     ): Response<List<DoctorPatientLinkDto>>
 
-    @PATCH("doctor-patient-links/{linkId}/activate")
+    @PATCH("doctor-patient-links/{externalId}/activate")
     suspend fun activateLink(
         @Header("Authorization") token: String,
-        @Path("linkId") linkId: Long
+        @Path("externalId") externalId: String
     ): Response<Unit>
+
+    @PATCH("doctor-patient-links/{externalId}/delete")
+    suspend fun deactivateLink(
+        @Header("Authorization") token: String,
+        @Path("externalId") externalId: String
+    ): Response<Unit>
+
+    @GET("treatments/patient/{patientUuid}")
+    suspend fun getTreatmentsByPatient(
+        @Header("Authorization") token: String,
+        @Path("patientUuid") patientUuid: String
+    ): Response<List<TreatmentDto>>
+
+    @POST("treatments")
+    suspend fun addTreatment(
+        @Header("Authorization") token: String,
+        @Body treatment: TreatmentRequestDto
+    ): Response<Unit>
+
 }

@@ -1,6 +1,5 @@
 package oncontroldoctor.upc.edu.pe.authentication.presentation
 
-import android.content.SharedPreferences
 import oncontroldoctor.upc.edu.pe.authentication.data.remote.AuthService
 import oncontroldoctor.upc.edu.pe.authentication.data.repository.AuthRepositoryImpl
 import oncontroldoctor.upc.edu.pe.authentication.domain.repository.AuthRepository
@@ -14,11 +13,14 @@ import oncontroldoctor.upc.edu.pe.profile.domain.usecase.CreateDoctorProfileUseC
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorProfileUseCase
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorUuidUseCase
 import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.CompleteProfileViewModel
-import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants.BASE_URL
 import oncontroldoctor.upc.edu.pe.treatment.data.remote.TreatmentService
 import oncontroldoctor.upc.edu.pe.treatment.data.repository.TreatmentRepositoryImpl
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.ActivateLinkUseCase
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.AddTreatmentUseCase
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.DeactivateLinkUseCase
 import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.GetDoctorPatientsUseCase
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.GetTreatmentsUseCase
 import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.LinkDoctorPatientUseCase
 import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.SearchPatientsUseCase
 import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.TreatmentViewModel
@@ -83,11 +85,19 @@ object PresentationModule {
         val searchPatientsUseCase = SearchPatientsUseCase(treatmentRepository)
         val linkDoctorPatientUseCase = LinkDoctorPatientUseCase(treatmentRepository)
         val getDoctorPatientsUseCase = GetDoctorPatientsUseCase(treatmentRepository)
+        val activateLinkUseCase = ActivateLinkUseCase(treatmentRepository)
+        val deactivateLinkUseCase = DeactivateLinkUseCase(treatmentRepository)
+        val addTreatmentUseCase = AddTreatmentUseCase(treatmentRepository)
+        val getTreatmentsUseCase = GetTreatmentsUseCase(treatmentRepository)
 
         return TreatmentViewModel(
             searchPatientsUseCase,
             linkDoctorPatientUseCase,
-            getDoctorPatientsUseCase
+            getDoctorPatientsUseCase,
+            activateLinkUseCase,
+            deactivateLinkUseCase,
+            addTreatmentUseCase,
+            getTreatmentsUseCase
         )
     }
 }

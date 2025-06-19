@@ -1,6 +1,6 @@
 package oncontroldoctor.upc.edu.pe.home.presentation.view
 
-
+import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -28,15 +28,15 @@ data class NavigationItem(
 )
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToPatientDetail: (String, String) -> Unit
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Obtén token y doctorUuid desde SessionManager
     val token = remember { SessionManager(context).getToken() ?: "" }
     val doctorUuid = remember { SessionManager(context).getUuid() ?: "" }
 
-    // ViewModel
     val treatmentViewModel = remember { PresentationModule.getTreatmentViewModel() }
 
     val navigationItems = listOf(
@@ -77,9 +77,11 @@ fun HomeScreen() {
                 PatientsScreen(
                     viewModel = treatmentViewModel,
                     doctorUuid = doctorUuid,
-                    token = token
+                    token = token,
+                    onNavigateToPatientDetail = onNavigateToPatientDetail
                 )
             }
+
             composable("Messages") {
                 Text("Mensajes", modifier = Modifier.fillMaxSize())
             }

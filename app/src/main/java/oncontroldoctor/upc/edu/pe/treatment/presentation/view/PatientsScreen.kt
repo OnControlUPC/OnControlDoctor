@@ -1,5 +1,6 @@
 package oncontroldoctor.upc.edu.pe.treatment.presentation.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,8 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import oncontroldoctor.upc.edu.pe.treatment.data.model.DoctorPatientLinkDto
-import oncontroldoctor.upc.edu.pe.treatment.data.model.PatientDto
 import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.TreatmentViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -22,7 +21,8 @@ import androidx.compose.material3.IconButton
 fun PatientsScreen(
     viewModel: TreatmentViewModel,
     doctorUuid: String,
-    token: String
+    token: String,
+    onNavigateToPatientDetail: (String, String) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
 
@@ -61,19 +61,45 @@ fun PatientsScreen(
 
         if (searchQuery.text.isBlank()) {
             Text("Pacientes vinculados", style = MaterialTheme.typography.titleMedium)
+
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+
             LazyColumn {
-                items(linkedPatients.filter { it.status in listOf("ACCEPTED", "ACTIVE", "PENDING") }) { link ->
+
+                items(linkedPatients.filter { it.status in listOf("ACCEPTED", "ACTIVE", "PENDING", "DISABLED") }) { link ->
                     val statusColor = when (link.status) {
                         "ACCEPTED" -> MaterialTheme.colorScheme.primary
                         "ACTIVE" -> MaterialTheme.colorScheme.tertiary
                         "PENDING" -> MaterialTheme.colorScheme.secondary
+                        "DISABLED" -> MaterialTheme.colorScheme.error
                         else -> MaterialTheme.colorScheme.onSurface
+                    }
+
+                    val actionLabel = when (link.status) {
+                        "ACTIVE" -> "Desactivar"
+                        "ACCEPTED", "DISABLED" -> "Activar"
+                        else -> null
+                    }
+
+                    val onClickAction = when (link.status) {
+                        "ACTIVE" -> {
+                            { viewModel.deactivateLink(token, link.externalId, doctorUuid) }
+                        }
+                        "ACCEPTED", "DISABLED" -> {
+                            { viewModel.activateLink(token, link.externalId, doctorUuid) }
+                        }
+                        else -> null
                     }
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 8.dp)
+                            .clickable(enabled = link.status == "ACTIVE") {
+                                onNavigateToPatientDetail(link.patientUuid, link.patientFullName)
+                            },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -83,13 +109,19 @@ fun PatientsScreen(
                         Text(
                             text = link.status,
                             color = statusColor,
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(end = 8.dp)
                         )
+                        if (actionLabel != null && onClickAction != null) {
+                            Button(onClick = onClickAction) {
+                                Text(actionLabel)
+                            }
+                        }
                     }
                     Divider()
                 }
             }
-
+            }
         } else {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))

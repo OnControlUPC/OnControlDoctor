@@ -1,11 +1,10 @@
 package oncontroldoctor.upc.edu.pe.shared.presentation.navigation
 
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import android.net.Uri
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.NavHost
 
@@ -26,6 +25,8 @@ import oncontroldoctor.upc.edu.pe.home.presentation.view.HomeScreen
 import oncontroldoctor.upc.edu.pe.profile.presentation.view.CompleteProfileEntry
 import oncontroldoctor.upc.edu.pe.profile.presentation.view.CompleteProfileScreen
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants.BASE_URL
+import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientDetailScreen
+import oncontroldoctor.upc.edu.pe.treatment.presentation.view.TreatmentsScreen
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -139,8 +140,41 @@ fun OncoAppNav(startDestination: Boolean) {
         }
 
         composable("home") {
-            HomeScreen()
+            HomeScreen(
+                onNavigateToPatientDetail = { uuid, name ->
+                    navController.navigate("patientDetail/$uuid/${Uri.encode(name)}")
+                }
+            )
         }
+
+
+        composable("patientDetail/{patientUuid}/{patientName}") { backStackEntry ->
+            val patientUuid = backStackEntry.arguments?.getString("patientUuid")!!
+            val rawName = backStackEntry.arguments?.getString("patientName") ?: ""
+            val patientName = Uri.decode(rawName)
+            PatientDetailScreen(
+                patientName = patientName,
+                patientUuid = patientUuid,
+                onNavigateToTreatments = { patientUuid ->
+                    navController.navigate("treatments/$patientUuid")
+                }
+            )
+        }
+        composable("treatments/{patientUuid}") { backStackEntry ->
+            val patientUuid = backStackEntry.arguments?.getString("patientUuid")!!
+            val context = LocalContext.current
+            val token = SessionManager(context).getToken() ?: ""
+            val doctorUuid = SessionManager(context).getUuid() ?: ""
+            val viewModel = PresentationModule.getTreatmentViewModel()
+
+            TreatmentsScreen(
+                patientUuid = patientUuid,
+                viewModel = viewModel,
+                token = token,
+                doctorUuid = doctorUuid
+            )
+        }
+
 
     }
 }
