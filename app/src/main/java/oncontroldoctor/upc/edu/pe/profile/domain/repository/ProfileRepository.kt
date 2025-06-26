@@ -4,7 +4,8 @@ import oncontroldoctor.upc.edu.pe.profile.data.model.DoctorProfileRequest
 import oncontroldoctor.upc.edu.pe.profile.domain.model.DoctorProfile
 
 interface ProfileRepository {
-    suspend fun getDoctorUuid(token: String): String?
-    suspend fun getDoctorProfile(uuid: String, token: String): DoctorProfile?
-    suspend fun createDoctorProfile(token: String, request: DoctorProfileRequest): Boolean
+    suspend fun getDoctorUuid(): Result<String?>
+    suspend fun getDoctorProfile(uuid: String): Result<DoctorProfile?>
+    suspend fun createDoctorProfile(request: DoctorProfileRequest): Result<Unit>
 }
+

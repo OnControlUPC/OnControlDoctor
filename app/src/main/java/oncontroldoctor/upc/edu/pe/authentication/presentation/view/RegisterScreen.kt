@@ -23,27 +23,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import oncontroldoctor.upc.edu.pe.authentication.domain.model.UserSession
+import oncontroldoctor.upc.edu.pe.authentication.data.model.SignUpRequest
 import oncontroldoctor.upc.edu.pe.authentication.presentation.viewmodel.RegisterViewModel
 
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
-    onLoginClick: () -> Unit,
-    onRegisterSuccess: (UserSession) -> Unit
-){
+    onLoginClick: () -> Unit
+) {
     var username by remember { mutableStateOf("") }
-    var email by remember {mutableStateOf("")}
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember {mutableStateOf("")}
+    var confirmPassword by remember { mutableStateOf("") }
 
-    var isLoading = viewModel.isLoading.value
-    var errorMessage = viewModel.errorMessage.value
-    val session = viewModel.userSession.value
+    val isLoading by viewModel.isLoading
+    val errorMessage by viewModel.errorMessage
 
-    LaunchedEffect(session) {
-        session?.let { onRegisterSuccess(it) }
+    val isRegistered by viewModel.success
+    LaunchedEffect(isRegistered) {
+        if(isRegistered){
+            onLoginClick()
+        }
     }
+
 
     Column(
         modifier = Modifier
@@ -102,10 +104,26 @@ fun RegisterScreen(
 
         Button(
             onClick = {
-                if (password != confirmPassword) {
-                    viewModel.errorMessage.value = "Passwords do not match"
-                } else {
-                    viewModel.register(username, email, password)
+                when {
+                    username.length < 7 -> {
+                        viewModel.setError("El nombre de usuario debe tener al menos 7 caracteres")
+                    }
+                    password.length < 8 -> {
+                        viewModel.setError("La contraseña debe tener al menos 8 caracteres")
+                    }
+                    password != confirmPassword -> {
+                        viewModel.setError("Las contraseñas no coinciden")
+                    }
+                    else -> {
+                        viewModel.register(
+                            SignUpRequest(
+                                username = username,
+                                email = email,
+                                password = password,
+                                role = "ROLE_ADMIN"
+                            )
+                        )
+                    }
                 }
             },
             enabled = !isLoading,
@@ -114,16 +132,15 @@ fun RegisterScreen(
             Text(if (isLoading) "Registering..." else "Register")
         }
 
-        if (errorMessage != null) {
+        if (!errorMessage.isNullOrEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+            Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(onClick = onLoginClick) {
-            Text("Do you have an account? Login")
+            Text("Already have an account? Login")
         }
     }
-
 }
