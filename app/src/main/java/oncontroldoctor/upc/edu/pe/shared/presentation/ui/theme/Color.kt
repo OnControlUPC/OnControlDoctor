@@ -1,4 +1,4 @@
-package oncontroldoctor.upc.edu.pe.ui.theme
+package oncontroldoctor.upc.edu.pe.shared.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
