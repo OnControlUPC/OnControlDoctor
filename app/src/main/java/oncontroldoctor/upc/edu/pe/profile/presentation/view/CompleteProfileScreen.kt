@@ -14,14 +14,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionManager
+import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
 import oncontroldoctor.upc.edu.pe.profile.data.model.DoctorProfileRequest
 import oncontroldoctor.upc.edu.pe.profile.presentation.components.ImageUploadSection
 import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.CompleteProfileViewModel
@@ -32,11 +34,10 @@ fun CompleteProfileScreen(
     onProfileCompleted: () -> Unit
 ) {
     val context = LocalContext.current
-    val sessionManager = remember { SessionManager(context) }
-    val token = sessionManager.getToken() ?: return
-    val userId = sessionManager.getUserId() ?: return
+    val userId = SessionHolder.getUserId() ?: return
+    val token = SessionHolder.getToken() ?: return
 
-    var step by remember { mutableStateOf(1) }
+    var step by remember { mutableIntStateOf(1) }
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -47,16 +48,16 @@ fun CompleteProfileScreen(
     var specialty by remember { mutableStateOf("") }
     var urlPhoto by remember { mutableStateOf("") }
 
-    val creationState = viewModel.profileCreationState.value
+    val creationState by viewModel.profileCreationState.collectAsState()
 
     LaunchedEffect(creationState) {
-        if (creationState == true) {
+        if (creationState?.isSuccess == true) {
             onProfileCompleted()
         }
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Complete your profile step $step to 3", style = MaterialTheme.typography.headlineSmall)
+        Text("Complete your profile step $step of 3", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
 
         when (step) {
@@ -79,9 +80,7 @@ fun CompleteProfileScreen(
                     token = token,
                     userId = userId,
                     urlPhoto = urlPhoto,
-                    onImageUploaded = { uploadedUrl ->
-                        urlPhoto = uploadedUrl
-                    }
+                    onImageUploaded = { uploadedUrl -> urlPhoto = uploadedUrl }
                 )
             }
         }
@@ -122,16 +121,16 @@ fun CompleteProfileScreen(
                         CMPCode = cmpCode,
                         photoUrl = urlPhoto
                     )
-                    viewModel.createProfile(token, request)
+                    viewModel.createProfile(request)
                 }
             }) {
                 Text(if (step < 3) "Next" else "Finalize")
             }
         }
 
-        if (creationState == false) {
+        if (creationState?.isFailure == true) {
+            Spacer(modifier = Modifier.height(12.dp))
             Text("Error saving your profile", color = MaterialTheme.colorScheme.error)
         }
     }
 }
-

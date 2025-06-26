@@ -17,29 +17,25 @@ class LoginViewModel(
         private set
     var errorMessage = mutableStateOf<String?>(null)
         private set
+
     fun login(identifier : String, password: String){
         isLoading.value = true
         errorMessage.value = null
 
         viewModelScope.launch {
-            try {
-                val session = signInUseCase(identifier, password)
-                if(session != null){
-                    if(session.role != "ROLE_ADMIN"){
-                        errorMessage.value = "This account does not have privileges access the system"
-                    } else{
+            signInUseCase(identifier, password).fold(
+                onSuccess = { session ->
+                    if (session.role != "ROLE_ADMIN") {
+                        errorMessage.value = "This account does not have privileges to access the system"
+                    } else {
                         userSession.value = session
                     }
-                } else {
-                    errorMessage.value = "Invalid credentials"
+                },
+                onFailure = {
+                    errorMessage.value = it.message ?: "An error occurred"
                 }
-            } catch (e: Exception){
-                errorMessage.value = e.message ?: "An error occurred"
-            } finally {
-                isLoading.value = false
-            }
+            )
+            isLoading.value = false
         }
-
     }
-
 }

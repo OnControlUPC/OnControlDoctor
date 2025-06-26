@@ -7,8 +7,16 @@ import oncontroldoctor.upc.edu.pe.authentication.domain.repository.AuthRepositor
 class SignInUseCase(
     private val repository: AuthRepository
 ) {
-    suspend operator fun invoke(identifier: String, password: String): UserSession? {
-        val request = SignInRequest(identifier, password)
-        return repository.signIn(request)
+    suspend operator fun invoke(identifier: String, password: String): Result<UserSession> {
+        return try {
+            val session = repository.signIn(SignInRequest(identifier, password))
+            if (session != null) {
+                Result.success(session)
+            } else {
+                Result.failure(Exception("Invalid credentials or user not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

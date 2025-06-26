@@ -6,7 +6,7 @@ import oncontroldoctor.upc.edu.pe.profile.domain.repository.ProfileRepository
 class GetDoctorProfileUseCase(
     private val repository: ProfileRepository
 ) {
-    suspend operator fun invoke(uuid: String, token: String): DoctorProfile? {
-        return repository.getDoctorProfile(uuid, token)
+    suspend operator fun invoke(uuid: String): Result<DoctorProfile?> {
+        return repository.getDoctorProfile(uuid)
     }
 }
