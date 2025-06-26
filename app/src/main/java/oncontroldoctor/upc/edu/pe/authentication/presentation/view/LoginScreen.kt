@@ -1,6 +1,5 @@
 package oncontroldoctor.upc.edu.pe.authentication.presentation.view
 
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,25 +26,26 @@ import androidx.compose.ui.unit.dp
 import oncontroldoctor.upc.edu.pe.authentication.domain.model.UserSession
 import oncontroldoctor.upc.edu.pe.authentication.presentation.viewmodel.LoginViewModel
 
+
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onRegisterClick: () -> Unit,
-    onLoginSuccess: (UserSession) -> Unit
-){
+    onLoginSuccess: (UserSession) -> Unit,
+    onRegisterClick: () -> Unit
+) {
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val isLoading = viewModel.isLoading.value
-    val errorMessage = viewModel.errorMessage.value
-    val session = viewModel.userSession.value
+    val isLoading by viewModel.isLoading
+    val errorMessage by viewModel.errorMessage
+    val session by viewModel.userSession
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
         verticalArrangement = Arrangement.Center
-    ){
+    ) {
         Text("Login", style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -73,9 +73,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = {
-                viewModel.login(identifier, password)
-            },
+            onClick = { viewModel.login(identifier, password) },
             enabled = !isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -88,16 +86,13 @@ fun LoginScreen(
             Text("Don't have an account? Register")
         }
 
-        if (errorMessage != null){
+        if (errorMessage != null) {
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+            Text(text = errorMessage ?: "", color = MaterialTheme.colorScheme.error)
         }
+    }
 
-        val session = viewModel.userSession.value
-        LaunchedEffect(session) {
-            if(session!=null){
-                onLoginSuccess(session)
-            }
-        }
+    LaunchedEffect(session) {
+        session?.let { onLoginSuccess(it) }
     }
 }
