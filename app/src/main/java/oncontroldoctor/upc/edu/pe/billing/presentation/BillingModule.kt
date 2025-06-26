@@ -1,43 +1,49 @@
 package oncontroldoctor.upc.edu.pe.billing.presentation
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.android.components.ViewModelComponent
 import oncontroldoctor.upc.edu.pe.billing.data.remote.BillingService
 import oncontroldoctor.upc.edu.pe.billing.data.repository.BillingRepositoryImpl
 import oncontroldoctor.upc.edu.pe.billing.domain.repository.BillingRepository
 import oncontroldoctor.upc.edu.pe.billing.domain.usecase.GetActiveSubscriptionUseCase
 import oncontroldoctor.upc.edu.pe.billing.domain.usecase.GetPlansUseCase
 import oncontroldoctor.upc.edu.pe.billing.domain.usecase.UseSubscriptionKeyUseCase
-import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants.BASE_URL
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import oncontroldoctor.upc.edu.pe.billing.domain.usecase.ValidateSubscriptionKeyUseCase
+import oncontroldoctor.upc.edu.pe.billing.presentation.viewmodel.BillingViewModel
+import oncontroldoctor.upc.edu.pe.shared.data.remote.ServiceFactory
 
-object BillingModule{
 
-    fun provideBillingService(): BillingService {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(BillingService::class.java)
+object BillingModule {
+
+    private val service: BillingService by lazy {
+        ServiceFactory.create()
     }
 
-    fun provideBillingRepository(
-        billingService: BillingService
-    ): BillingRepository {
-        return BillingRepositoryImpl(billingService)
+    private val repository: BillingRepository by lazy {
+        BillingRepositoryImpl(service)
     }
 
-    fun provideGetPlanUseCase(repository: BillingRepository): GetPlansUseCase{
-        return GetPlansUseCase(repository)
+    private val getPlansUseCase: GetPlansUseCase by lazy {
+        GetPlansUseCase(repository)
     }
 
-    fun provideUseKeyUseCase(repository: BillingRepository): UseSubscriptionKeyUseCase{
-        return UseSubscriptionKeyUseCase(repository)
+    private val useKeyUseCase: UseSubscriptionKeyUseCase by lazy {
+        UseSubscriptionKeyUseCase(repository)
     }
 
-    fun provideGetActiveSubscriptionUseCase(repository: BillingRepository): GetActiveSubscriptionUseCase{
-        return GetActiveSubscriptionUseCase(repository)
+    private val getActiveSubscriptionUseCase: GetActiveSubscriptionUseCase by lazy {
+        GetActiveSubscriptionUseCase(repository)
+    }
+
+    private val validateKeyUseCase: ValidateSubscriptionKeyUseCase by lazy {
+        ValidateSubscriptionKeyUseCase(repository)
+    }
+
+
+    fun provideBillingViewModel(): BillingViewModel {
+        return BillingViewModel(
+            getPlansUseCase = getPlansUseCase,
+            validateKeyUseCase = validateKeyUseCase,
+            useKeyUseCase = useKeyUseCase,
+            getActiveSubscriptionUseCase = getActiveSubscriptionUseCase
+        )
     }
 }

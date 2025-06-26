@@ -24,9 +24,23 @@ class SessionManager(context: Context){
         }
     }
 
+
     fun saveUuid(uuid: String){
         sharedPreferences.edit().apply{
             putString(KEY_UUID, uuid)
+            apply()
+        }
+    }
+
+    fun saveSubscriptionActId(subscriptionActId: Long){
+        sharedPreferences.edit().apply{
+            putLong(KEY_SUBSCRIPTION_ACT_ID, subscriptionActId)
+            apply()
+        }
+    }
+    fun savePlanId(planId: Long) {
+        sharedPreferences.edit().apply {
+            putLong(KEY_PLAN_ID, planId)
             apply()
         }
     }
@@ -35,6 +49,8 @@ class SessionManager(context: Context){
     fun getUserId(): Long = sharedPreferences.getLong(KEY_USER_ID, -1L)
     fun getUuid(): String? = sharedPreferences.getString(KEY_UUID, null)
     fun getUsername(): String? = sharedPreferences.getString(KEY_USERNAME, null)
+    fun getPlanId(): Long = sharedPreferences.getLong(KEY_PLAN_ID, -1L)
+    fun getSubscriptionActId(): Long = sharedPreferences.getLong(KEY_SUBSCRIPTION_ACT_ID, -1L)
     fun clearSession(){
         sharedPreferences.edit { clear() }
     }
@@ -44,5 +60,7 @@ class SessionManager(context: Context){
         private const val KEY_USERNAME = "username"
         private const val KEY_TOKEN = "token"
         private const val KEY_UUID = "uuid"
+        private const val KEY_PLAN_ID = "plan_id"
+        private const val KEY_SUBSCRIPTION_ACT_ID = "subscription_active"
     }
 }

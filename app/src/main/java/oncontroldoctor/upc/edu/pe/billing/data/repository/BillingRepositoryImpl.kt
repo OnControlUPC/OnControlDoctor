@@ -1,5 +1,6 @@
 package oncontroldoctor.upc.edu.pe.billing.data.repository
 
+import android.util.Log
 import oncontroldoctor.upc.edu.pe.billing.data.mapper.toDomain
 import oncontroldoctor.upc.edu.pe.billing.data.model.UseSubscriptionKeyRequest
 import oncontroldoctor.upc.edu.pe.billing.data.remote.BillingService
@@ -7,49 +8,42 @@ import oncontroldoctor.upc.edu.pe.billing.domain.model.Plan
 import oncontroldoctor.upc.edu.pe.billing.domain.model.Subscription
 import oncontroldoctor.upc.edu.pe.billing.domain.model.SubscriptionKey
 import oncontroldoctor.upc.edu.pe.billing.domain.repository.BillingRepository
-import javax.inject.Inject
+import oncontroldoctor.upc.edu.pe.shared.data.mappers.toDomain
+import oncontroldoctor.upc.edu.pe.shared.data.remote.BaseService
 
 class BillingRepositoryImpl(
     private val billingService: BillingService
-) : BillingRepository
+) : BillingRepository, BaseService()
 {
-    override suspend fun getPlans(token: String): List<Plan> {
-        val response = billingService.getPlans("Bearer $token")
-        if(response.isSuccessful){
-            return response.body()?.map{it.toDomain()} ?: emptyList()
-        } else {
-            throw Exception("Error fetching plans: ${response.errorBody()?.string()}")
-        }
+    override suspend fun getPlans(): Result<List<Plan>> {
+        return authorizedCall { token ->
+            billingService.getPlans(token)
+        }.map { list -> list.map { it.toDomain() } }
     }
 
-    override suspend fun getSubscriptionKey(token: String, code: String): SubscriptionKey {
-        val response = billingService.getSubscriptionKey( "Bearer $token", code)
-        if(response.isSuccessful){
-            return response.body()?.toDomain()
-                ?: throw Exception("Subscription key not found")
-        } else {
-            throw Exception("Error fetching subscription key: ${response.errorBody()?.string()}")
-        }
+    override suspend fun getSubscriptionKey(code: String): Result<SubscriptionKey> {
+        return authorizedCall { token ->
+            billingService.getSubscriptionKey(token, code)
+        }.map { it.toDomain() }
     }
 
-    override suspend fun useSubscriptionKey(token: String, keyId: Long, userId: Long) {
+    override suspend fun useSubscriptionKey(keyId: Long, userId: Long): Result<Unit> {
         val request = UseSubscriptionKeyRequest(subscriptionKeyId = keyId, userId = userId)
-        val response = billingService.useSubscriptionKey("Bearer $token", request)
-        if (!response.isSuccessful) {
-            throw Exception("Error usando la clave de suscripción: ${response.errorBody()?.string()}")
+        return authorizedCall { token ->
+            billingService.useSubscriptionKey(token, request)
         }
     }
 
-    override suspend fun getActiveSubscription( token: String, adminId: Long): Subscription? {
-        val response = billingService.getActiveSubscription("Bearer $token", adminId)
-        return if (response.isSuccessful) {
-            response.body()?.toDomain()
-        } else if (response.code() == 404) {
-            null
-        } else {
-            throw Exception("Error fetching active subscription: ${response.errorBody()?.string()}")
+    override suspend fun getActiveSubscription(adminId: Long): Result<Subscription?> {
+        return authorizedCall { token ->
+            billingService.getActiveSubscription(token, adminId)
+        }.mapCatching { response ->
+            val domain = response.toDomain()
+            Log.d("BILLING", "Resultado toDomain() = $domain")
+            domain
         }
     }
+
 
 }
 

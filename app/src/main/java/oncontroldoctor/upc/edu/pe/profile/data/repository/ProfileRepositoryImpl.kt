@@ -1,52 +1,55 @@
 package oncontroldoctor.upc.edu.pe.profile.data.repository
 
-import android.content.SharedPreferences
 import oncontroldoctor.upc.edu.pe.profile.data.model.DoctorProfileRequest
 import oncontroldoctor.upc.edu.pe.profile.data.model.toDomain
 import oncontroldoctor.upc.edu.pe.profile.data.remote.ProfileService
 import oncontroldoctor.upc.edu.pe.profile.domain.model.DoctorProfile
 import oncontroldoctor.upc.edu.pe.profile.domain.repository.ProfileRepository
+import oncontroldoctor.upc.edu.pe.shared.data.remote.BaseService
+
+import retrofit2.HttpException
 
 class ProfileRepositoryImpl(
-    private val service: ProfileService,
-): ProfileRepository {
-    override suspend fun getDoctorUuid(token: String): String? {
-        val response = service.getDoctorUuid("Bearer $token")
-        if (response.isSuccessful) {
-            return response.body()?.uuid
-        }
+    private val service: ProfileService
+): ProfileRepository, BaseService() {
 
-        return when (response.code()) {
-            404 -> null
-            else -> throw Exception("Error: ${response.code()} - ${response.message()}")
-        }
-
-    }
-
-    override suspend fun getDoctorProfile(
-        uuid: String,
-        token: String
-    ): DoctorProfile? {
-        val response = service.getDoctorProfileByUuid("Bearer $token", uuid)
-
-        if(response.isSuccessful){
-            val profile = response.body()?.toDomain()
-
-            if(profile?.active == false){
-                throw IllegalStateException("Doctor profile is inactive")
+    override suspend fun getDoctorUuid(): Result<String?> {
+        return authorizedCall { token ->
+            service.getDoctorUuid(token)
+        }.fold(
+            onSuccess = { Result.success(it.uuid) },
+            onFailure = {
+                if ((it as? HttpException)?.code() == 404) {
+                    Result.success(null)
+                } else {
+                    Result.failure(Exception("Error getting UUID: ${it.message}"))
+                }
             }
-
-            return profile
-        }
-        return null
+        )
     }
 
-    override suspend fun createDoctorProfile(
-        token: String,
-        request: DoctorProfileRequest
-    ): Boolean{
-        val response = service.createProfile("Bearer $token", request)
-        return response.isSuccessful
+    override suspend fun getDoctorProfile(uuid: String): Result<DoctorProfile?> {
+        return authorizedCall { token ->
+            service.getDoctorProfileByUuid(token, uuid)
+        }.fold(
+            onSuccess = {
+                val profile = it.toDomain()
+                if (profile?.active == false) {
+                    Result.failure(IllegalStateException("Doctor profile is inactive"))
+                } else {
+                    Result.success(profile)
+                }
+            },
+            onFailure = {
+                Result.failure(Exception("Error getting profile: ${it.message}"))
+            }
+        )
+    }
+
+    override suspend fun createDoctorProfile(request: DoctorProfileRequest): Result<Unit> {
+        return authorizedCall { token ->
+            service.createProfile(token, request)
+        }
     }
 
 }

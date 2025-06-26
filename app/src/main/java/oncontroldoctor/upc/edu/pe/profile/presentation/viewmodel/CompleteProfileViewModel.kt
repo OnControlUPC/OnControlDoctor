@@ -1,21 +1,22 @@
 package oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel
 
-import androidx.compose.runtime.mutableStateOf
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import oncontroldoctor.upc.edu.pe.profile.data.local.ProfileHolder
 import oncontroldoctor.upc.edu.pe.profile.data.model.DoctorProfileRequest
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.CreateDoctorProfileUseCase
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorProfileUseCase
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorUuidUseCase
-
 class CompleteProfileViewModel(
     private val getDoctorUuidUseCase: GetDoctorUuidUseCase,
     private val getDoctorProfileUseCase: GetDoctorProfileUseCase,
     private val createDoctorProfileUseCase: CreateDoctorProfileUseCase
-): ViewModel() {
+) : ViewModel() {
+
     sealed class UiState {
         object Loading : UiState()
         object ShouldCompleteProfile : UiState()
@@ -24,49 +25,50 @@ class CompleteProfileViewModel(
     }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
-    val profileCreationState = mutableStateOf<Boolean?>(null)
-
     val uiState = _uiState.asStateFlow()
 
-    fun checkProfile(token: String) {
+    private val _profileCreationState = MutableStateFlow<Result<Unit>?>(null)
+    val profileCreationState = _profileCreationState.asStateFlow()
+
+
+    fun checkProfile() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            try {
-                val uuid = getDoctorUuidUseCase(token)
 
-                if (uuid == null) {
-                    _uiState.value = UiState.ShouldCompleteProfile
-                    return@launch
+            getDoctorUuidUseCase().fold(
+                onSuccess = { uuid ->
+                    if (uuid == null) {
+                        _uiState.value = UiState.ShouldCompleteProfile
+                        return@fold
+                    }
+
+                    getDoctorProfileUseCase(uuid).fold(
+                        onSuccess = { profile ->
+                            if (profile == null) {
+                                _uiState.value = UiState.ShouldCompleteProfile
+                            } else if (!profile.active) {
+                                _uiState.value = UiState.Error("Your account is not active. Please contact support.")
+                            } else {
+                                ProfileHolder.doctorProfile = profile
+                                _uiState.value = UiState.ProfileLoaded(profile.uuid)
+                            }
+                        },
+                        onFailure = {
+                            _uiState.value = UiState.Error("Error getting profile: ${it.message}")
+                        }
+                    )
+                },
+                onFailure = {
+                    _uiState.value = UiState.Error("Error getting UUID: ${it.message}")
                 }
-
-                val profile = getDoctorProfileUseCase(uuid, token)
-
-                if (profile == null) {
-                    _uiState.value = UiState.ShouldCompleteProfile
-                    return@launch
-                }
-
-                if (!profile.active) {
-                    _uiState.value = UiState.Error("Tu cuenta ha sido desactivada.")
-                    return@launch
-                }
-
-                _uiState.value = UiState.ProfileLoaded(profile.uuid)
-
-            } catch (e: Exception) {
-                _uiState.value = UiState.Error("Error inesperado: ${e.message}")
-            }
-        }
-    }
-    fun createProfile(token: String, request: DoctorProfileRequest){
-        viewModelScope.launch{
-            try{
-                val success = createDoctorProfileUseCase(token, request)
-                profileCreationState.value = success
-            }catch (e: Exception){
-                profileCreationState.value = false
-            }
+            )
         }
     }
 
+    fun createProfile(request: DoctorProfileRequest) {
+        viewModelScope.launch {
+            val result = createDoctorProfileUseCase(request)
+            _profileCreationState.value = result
+        }
+    }
 }

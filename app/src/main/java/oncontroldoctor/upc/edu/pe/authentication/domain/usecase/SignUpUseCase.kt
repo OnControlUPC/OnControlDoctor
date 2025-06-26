@@ -5,9 +5,18 @@ import oncontroldoctor.upc.edu.pe.authentication.domain.repository.AuthRepositor
 
 class SignUpUseCase(
     private val repository: AuthRepository
-){
-    suspend operator fun invoke(username: String, email: String, password:String, role: String): Boolean{
-        val request = SignUpRequest(username, email, password, role)
-        return repository.signUp(request)
+) {
+    suspend operator fun invoke(request: SignUpRequest): Result<Unit> {
+        return try {
+            val success = repository.signUp(request)
+            if (success) {
+                Result.success(Unit)
+            } else {
+
+                Result.failure(Exception("Cannot register user. Please check the data. ${success}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
