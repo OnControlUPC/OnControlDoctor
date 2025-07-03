@@ -73,4 +73,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.java.websocket)
+    implementation(libs.rxjava)
+    implementation(libs.rxandroid)
+    implementation(libs.stompprotocolandroid)
+
 }

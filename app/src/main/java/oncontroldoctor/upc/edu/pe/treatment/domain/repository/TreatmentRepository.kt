@@ -1,9 +1,14 @@
 package oncontroldoctor.upc.edu.pe.treatment.domain.repository
 
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.AppointmentSimpleDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.CreateAppointmentDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.CreateProcedureRequestDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.DoctorPatientLinkDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.DoctorPatientLinkSimpleDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.MarkAppointmentRequest
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.PatientDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.ProcedureCalendarDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.SymptomDto
 import oncontroldoctor.upc.edu.pe.treatment.data.model.Procedure
 import oncontroldoctor.upc.edu.pe.treatment.data.model.Treatment
 
@@ -29,4 +34,11 @@ interface TreatmentRepository {
         request: CreateProcedureRequestDto
     ): Boolean
     suspend fun cancelProcedure(procedureId: Long, doctorUuid: String): Boolean
+    suspend fun getSymptomsByPatientUuid(patientUuid: String, from: String, to: String): List<SymptomDto>
+    suspend fun getAppointments(patientUuid: String): List<AppointmentSimpleDto>
+    suspend fun cancelAppointment(appointmentId: Long): Boolean
+    suspend fun markAppointment(markAppointmentRequest: MarkAppointmentRequest): Boolean
+    suspend fun createAppointment(request: CreateAppointmentDto): Boolean
+    suspend fun getProcedureCalendar(externalId: String): List<ProcedureCalendarDto>
+    suspend fun getTreatmentsByPatient(patientUuid: String): List<Treatment>
 }

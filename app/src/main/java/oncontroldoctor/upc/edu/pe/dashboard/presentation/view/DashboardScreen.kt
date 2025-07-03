@@ -31,6 +31,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
+import oncontroldoctor.upc.edu.pe.communication.presentation.view.CommunicationScreen
+import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.CommunicationViewModel
 import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
 import oncontroldoctor.upc.edu.pe.treatment.presentation.TreatmentModule
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientSearchScreen
@@ -50,7 +52,10 @@ fun DashboardScreen(
 
     Scaffold(
         bottomBar = {
-            BottomAppBar {
+            BottomAppBar(
+                containerColor = MaterialTheme.colorScheme.surface, // Fondo de la barra de navegación
+                tonalElevation = 8.dp // Elevación sutil para separarla del contenido
+            ) {
                 // Ítems del lado izquierdo
                 navItemsLeft.forEach { route ->
                     BottomBarItem(
@@ -63,7 +68,7 @@ fun DashboardScreen(
                         selected = currentRoute == route,
                         onClick = {
                             navController.navigate(route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -140,7 +145,15 @@ fun DashboardScreen(
                     doctorUuid = doctorUuid
                 )
             }
-            composable("messages") { /* Chat general o bandeja */ }
+            composable("messages") {
+                val communicationViewModel: CommunicationViewModel = viewModel()
+                CommunicationScreen(
+                    viewModel = communicationViewModel,
+                    onPatientClick = { patientUuid ->
+                        navController.navigate("chat/$patientUuid")
+                    }
+                )
+            }
             composable("settings") { /* Configuraciones del doctor */ }
             composable("search") {
                 val viewModel = TreatmentModule.getPatientSearchViewModel()
@@ -178,14 +191,16 @@ fun BottomBarItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant // Color para seleccionado e inactivo
 
-    TextButton(onClick = onClick) {
+    TextButton(
+        onClick = onClick
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(imageVector = icon, contentDescription = label, tint = color)
             Text(
                 text = label.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium, // Usar labelMedium para mejor legibilidad
                 color = color
             )
         }

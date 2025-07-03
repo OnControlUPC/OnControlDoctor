@@ -10,7 +10,7 @@ import oncontroldoctor.upc.edu.pe.shared.presentation.ui.theme.OnControlDoctorTh
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
         setContent {
             OnControlDoctorTheme(dynamicColor = false) {
                 OncoAppNav()
