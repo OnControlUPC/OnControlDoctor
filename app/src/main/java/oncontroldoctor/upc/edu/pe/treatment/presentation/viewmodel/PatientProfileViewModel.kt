@@ -1,5 +1,6 @@
 package oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,9 +13,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.CreateProcedureRequestDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.RecurrenceType
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.SymptomDto
 import oncontroldoctor.upc.edu.pe.treatment.data.model.Procedure
 import oncontroldoctor.upc.edu.pe.treatment.data.model.Treatment
 import oncontroldoctor.upc.edu.pe.treatment.domain.repository.TreatmentRepository
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import kotlin.text.format
 
 data class PatientProfileUiState(
     val name: String = "",
@@ -38,6 +45,8 @@ class PatientProfileViewModel(
     private val _procedures = mutableStateOf<List<Procedure>>(emptyList())
     val procedures: State<List<Procedure>> = _procedures
 
+    private val _symptoms = mutableStateOf<List<SymptomDto>>(emptyList())
+    val symptoms: State<List<SymptomDto>> = _symptoms
 
     fun loadTreatments(doctorUuid: String, patientUuid: String) {
         viewModelScope.launch {
@@ -62,7 +71,6 @@ class PatientProfileViewModel(
                     doctorProfileUuid = doctorUuid,
                     patientProfileUuid = patientUuid
                 )
-
                 loadTreatments(doctorUuid, patientUuid)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -134,6 +142,16 @@ class PatientProfileViewModel(
                 _uiState.value = _uiState.value.copy(
                     error = "No se pudo cancelar el procedimiento"
                 )
+            }
+        }
+    }
+
+    fun loadSymptoms(patientUuid: String, from: LocalDateTime, to: LocalDateTime) {
+        viewModelScope.launch {
+            try {
+                _symptoms.value = repository.getSymptomsByPatientUuid(patientUuid, from.toString(), to.toString())
+            } catch (e: Exception) {
+                _symptoms.value = emptyList()
             }
         }
     }

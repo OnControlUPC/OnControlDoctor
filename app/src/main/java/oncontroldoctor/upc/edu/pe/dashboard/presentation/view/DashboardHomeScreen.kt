@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+
 @SuppressLint("ContextCastToActivity")
 @Composable
 fun SetStatusBarColor(color: Color, darkIcons: Boolean = false) {
@@ -66,7 +67,7 @@ fun DashboardHomeScreen(
 
     val context = LocalContext.current
     val primaryColor = MaterialTheme.colorScheme.primary
-    SetStatusBarColor(primaryColor, darkIcons = false)
+    SetStatusBarColor(primaryColor, darkIcons = false) // Asegura que los iconos de la barra de estado sean claros sobre el color primario
     val profile by dashboardViewModel.profile.collectAsState()
     val profileName = "Dr. " + (profile?.lastName ?: "Usuario")
     val profileImageUrl = profile?.urlPhoto
@@ -74,7 +75,9 @@ fun DashboardHomeScreen(
     val plan by dashboardViewModel.planState.collectAsState()
     val citas = listOf(
         Appointment("Juan Pérez", "Consulta general", "10:00 AM", "24.06.2025"),
-        Appointment("María López", "Control", "12:00 PM", "25.06.2025")
+        Appointment("María López", "Control", "12:00 PM", "25.06.2025"),
+        Appointment("Carlos Ruiz", "Revisión anual", "09:30 AM", "26.06.2025"),
+        Appointment("Laura García", "Seguimiento", "01:00 PM", "27.06.2025")
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -94,16 +97,18 @@ fun DashboardHomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Welcome", color = Color.White, style = MaterialTheme.typography.headlineSmall)
-                    Text(profileName, color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
+                    Text("Bienvenido", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineSmall) // Usa onPrimary
+                    Text(profileName, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium) // Usa onPrimary
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = "Notificaciones",
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = 12.dp).size(32.dp)
+                        tint = MaterialTheme.colorScheme.onPrimary, // Usa onPrimary
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(32.dp)
                     )
                     AsyncImage(
                         model = profileImageUrl,
@@ -111,7 +116,7 @@ fun DashboardHomeScreen(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .border(2.dp, Color.White, CircleShape),
+                            .border(2.dp, MaterialTheme.colorScheme.onPrimary, CircleShape), // Usa onPrimary
                         contentScale = ContentScale.Crop
                     )
                 }
@@ -124,34 +129,37 @@ fun DashboardHomeScreen(
                 .fillMaxSize()
                 .padding(top = headerHeight + 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            // Sección tipo "My Family" → Próximas Citas
+            // Sección "Próximas Citas"
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Próximas citas", style = MaterialTheme.typography.titleMedium)
+                Text("Próximas citas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 TextButton(onClick = { /* Navegar a citas completas */ }) {
-                    Text("Ver más")
+                    Text("Ver más", color = MaterialTheme.colorScheme.primary) // Color primario para el botón
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp)) // Espacio entre título y lista
+
             if (citas.isNotEmpty()) {
-                LazyRow {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp) // Espacio entre tarjetas
+                ) {
                     items(citas.take(5)) { cita ->
                         Card(
-                            modifier = Modifier
-                                .width(220.dp)
-                                .padding(end = 12.dp),
+                            modifier = Modifier.width(220.dp),
                             shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(4.dp)
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Fondo de tarjeta
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(cita.paciente, style = MaterialTheme.typography.titleMedium)
-                                Text(cita.descripcion, style = MaterialTheme.typography.bodyMedium)
-                                Text(cita.hora, color = Color.Gray)
-                                Text(cita.fecha, color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                                Text(cita.paciente, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                Text(cita.descripcion, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) // Color más suave
+                                Text(cita.hora, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) // Color más suave
+                                Text(cita.fecha, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) // Color más suave
                             }
                         }
                     }
@@ -168,8 +176,8 @@ fun DashboardHomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Sección tipo "My illness history" → botones de acción
-            Text("Acciones rápidas", style = MaterialTheme.typography.titleMedium)
+            // Sección "Acciones rápidas"
+            Text("Acciones rápidas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(8.dp))
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -178,9 +186,7 @@ fun DashboardHomeScreen(
                 ActionTile(
                     title = "Crear cita",
                     icon = Icons.Default.MailOutline,
-                    onClick = {
-
-                    }
+                    onClick = { /* TODO */ }
                 )
                 ActionTile(
                     title = "Panel de sintomas",
@@ -215,8 +221,9 @@ fun ActionTile(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val bgColor = if (enabled) MaterialTheme.colorScheme.surfaceVariant else Color.LightGray
-    val iconColor = if (enabled) MaterialTheme.colorScheme.primary else Color.Gray
+    val bgColor = if (enabled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) // Color más suave para deshabilitado
+    val iconColor = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) // Icono más tenue para deshabilitado
+    val textColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Texto más tenue para deshabilitado
 
     Card(
         modifier = Modifier
@@ -247,7 +254,7 @@ fun ActionTile(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else Color.DarkGray
+                color = textColor
             )
         }
     }
