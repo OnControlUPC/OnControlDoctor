@@ -1,17 +1,24 @@
 package oncontroldoctor.upc.edu.pe.treatment.data.repository
 
 import oncontroldoctor.upc.edu.pe.shared.data.remote.BaseService
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.AppointmentSimpleDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.CreateAppointmentDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.CreateProcedureRequestDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.CreateTreatmentRequestDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.DoctorPatientLinkDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.DoctorPatientLinkRequestDto
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.DoctorPatientLinkSimpleDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.MarkAppointmentRequest
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.PatientDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.ProcedureCalendarDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.SymptomDto
 import oncontroldoctor.upc.edu.pe.treatment.data.model.Procedure
 import oncontroldoctor.upc.edu.pe.treatment.data.model.Treatment
 import oncontroldoctor.upc.edu.pe.treatment.data.remote.TreatmentService
 import oncontroldoctor.upc.edu.pe.treatment.domain.repository.TreatmentRepository
 import retrofit2.HttpException
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class TreatmentRepositoryImpl(
     private val service: TreatmentService
@@ -77,6 +84,8 @@ class TreatmentRepositoryImpl(
 
         return active + accepted + disabled
     }
+
+
     override suspend fun getPatientByUuid(uuid: String): PatientDto {
         return authorizedCall { token ->
             service.getPatientByUuid(token, uuid)
@@ -90,6 +99,14 @@ class TreatmentRepositoryImpl(
             service.getTreatmentByProfileUuid(token, doctorUuid)
         }.getOrElse {
             throw Exception("Error obteniendo tratamientos: ${it.message}")
+        }
+    }
+
+    override suspend fun getTreatmentsByPatient(patientUuid: String): List<Treatment>{
+        return authorizedCall { token->
+            service.getTreatmentsByPatientUuid(token, patientUuid)
+        }.getOrElse {
+            throw Exception("Error obteniendo tratamiento por paciente: ${it.message}")
         }
     }
 
@@ -136,6 +153,74 @@ class TreatmentRepositoryImpl(
         return authorizedCall { token ->
             service.cancelProcedure(token, procedureId, doctorUuid)
         }.isSuccess
+    }
+
+    override suspend fun getSymptomsByPatientUuid(
+        patientUuid: String,
+        from: String,
+        to: String
+    ): List<SymptomDto> {
+        val fromUtc = convertLimaToUtc(from)
+        val toUtc = convertLimaToUtc(to)
+        return authorizedCall { token ->
+            service.getSymptomLogsByPatient(token, patientUuid, fromUtc, toUtc)
+        }.getOrElse {
+            throw Exception("Error obteniendo síntomas: ${it.message}")
+        }.map { dto ->
+            dto.copy(loggedAt = convertUtcToLima(dto.loggedAt))
+        }
+    }
+
+    fun convertLimaToUtc(limaDateTime: String): String {
+        val localDateTime = java.time.LocalDateTime.parse(limaDateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val limaZoned = localDateTime.atZone(ZoneId.of("America/Lima"))
+        val utcZoned = limaZoned.withZoneSameInstant(ZoneId.of("UTC"))
+        return utcZoned.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    }
+
+    fun convertUtcToLima(utcDateTime: String): String {
+        val localDateTime = java.time.LocalDateTime.parse(utcDateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val utcZoned = localDateTime.atZone(ZoneId.of("UTC"))
+        val limaZoned = utcZoned.withZoneSameInstant(ZoneId.of("America/Lima"))
+        return limaZoned.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    }
+
+    override suspend fun getAppointments(patientUuid: String): List<AppointmentSimpleDto> {
+        return authorizedCall { token ->
+            service.getAppointments(token, patientUuid)
+        }.getOrElse {
+            throw Exception("Error obteniendo citas: ${it.message}")
+        }.map { dto ->
+            dto.copy(scheduledAt = convertUtcToLima(dto.scheduledAt))
+        }
+    }
+
+    override suspend fun cancelAppointment(appointmentId: Long): Boolean {
+        return authorizedCall { token ->
+            service.cancelAppointment(token, appointmentId)
+        }.isSuccess
+    }
+
+    override suspend fun markAppointment(markAppointmentRequest: MarkAppointmentRequest): Boolean {
+        return authorizedCall { token ->
+            service.markAppointment(token, markAppointmentRequest)
+        }.isSuccess
+    }
+
+    override suspend fun createAppointment(request: CreateAppointmentDto): Boolean {
+        return authorizedCall { token ->
+            service.createAppointment(token, request)
+        }.isSuccess
+    }
+
+    override suspend fun getProcedureCalendar(externalId: String): List<ProcedureCalendarDto> {
+        return authorizedCall { token ->
+            service.getProcedureCalendar(token, externalId)
+        }.getOrElse {
+            throw Exception("Error obteniendo calendario de procedimientos: ${it.message}")
+        }.map { dto ->
+            dto.copy(scheduledAt = convertUtcToLima(dto.scheduledAt))
+        }
     }
 
 }
