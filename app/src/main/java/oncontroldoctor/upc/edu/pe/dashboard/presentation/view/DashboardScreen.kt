@@ -31,9 +31,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
+import oncontroldoctor.upc.edu.pe.communication.presentation.ChatModule
+import oncontroldoctor.upc.edu.pe.communication.presentation.view.ChatScreen
 import oncontroldoctor.upc.edu.pe.communication.presentation.view.CommunicationScreen
-import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.CommunicationViewModel
+import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.ChatViewModel
 import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
+import oncontroldoctor.upc.edu.pe.shared.data.remote.ApiConstants.WS_BASE_URL
 import oncontroldoctor.upc.edu.pe.treatment.presentation.TreatmentModule
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientSearchScreen
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientTreatmentPanelScreen
@@ -145,16 +148,6 @@ fun DashboardScreen(
                     doctorUuid = doctorUuid
                 )
             }
-            composable("messages") {
-                val communicationViewModel: CommunicationViewModel = viewModel()
-                CommunicationScreen(
-                    viewModel = communicationViewModel,
-                    onPatientClick = { patientUuid ->
-                        navController.navigate("chat/$patientUuid")
-                    }
-                )
-            }
-            composable("settings") { /* Configuraciones del doctor */ }
             composable("search") {
                 val viewModel = TreatmentModule.getPatientSearchViewModel()
                 val doctorUuid = SessionHolder.getUserUuid() ?: ""
@@ -166,6 +159,31 @@ fun DashboardScreen(
                     }
                 )
             }
+            composable("messages") {
+                val doctorUuid = SessionHolder.getUserUuid() ?: ""
+                val chatViewModelFactory = ChatModule.provideChatViewModelFactory()
+                val chatViewModel: ChatViewModel = viewModel(factory = chatViewModelFactory)
+                LaunchedEffect(doctorUuid, chatViewModel) {
+                    chatViewModel.load(doctorUuid)
+                }
+                CommunicationScreen(
+                    viewModel = chatViewModel,
+                    doctorUuid = doctorUuid,
+                    onPatientClick = { patientUuid ->
+                        navController.navigate("messages/$patientUuid")
+                    }
+                )
+
+            }
+            composable("messages/{patientUuid}"){ backStackEntry ->
+                val patientUuid = backStackEntry.arguments?.getString("patientUuid") ?: ""
+                val repository = ChatModule.provideChatRepository()
+                ChatScreen(
+                    patientUuid = patientUuid,
+                    repository = repository
+                )
+            }
+            composable("settings") { /* Configuraciones del doctor */ }
             composable("panel/{patientUuid}") { backStackEntry ->
                 val patientUuid = backStackEntry.arguments?.getString("patientUuid") ?: ""
                 val repository = TreatmentModule.provideTreatmentRepository() // Obtén el repositorio, no el factory
