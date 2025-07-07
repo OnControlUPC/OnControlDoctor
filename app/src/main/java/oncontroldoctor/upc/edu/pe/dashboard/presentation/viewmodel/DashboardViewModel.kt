@@ -13,8 +13,6 @@ import oncontroldoctor.upc.edu.pe.dashboard.domain.usecase.GetLocalSubscriptionU
 import oncontroldoctor.upc.edu.pe.dashboard.domain.usecase.SyncSubscriptionAndPlanUseCase
 import oncontroldoctor.upc.edu.pe.profile.data.local.ProfileHolder
 import oncontroldoctor.upc.edu.pe.profile.domain.model.DoctorProfile
-import oncontroldoctor.upc.edu.pe.profile.domain.repository.ProfileRepository
-import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorProfileUseCase
 
 
 class DashboardViewModel(
