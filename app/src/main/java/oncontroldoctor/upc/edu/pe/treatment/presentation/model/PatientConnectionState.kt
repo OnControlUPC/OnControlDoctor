@@ -6,7 +6,8 @@ import oncontroldoctor.upc.edu.pe.treatment.data.dto.PatientDto
 data class PatientConnectionState(
     val patient: PatientDto,
     val connectionStatus: ConnectionStatus?,
-    val externalId: String? = null
+    val externalId: String? = null,
+    val lastMessagePreview: String? = null
 ){
     companion object {
         fun from(patient: PatientDto, link: DoctorPatientLinkDto?): PatientConnectionState {

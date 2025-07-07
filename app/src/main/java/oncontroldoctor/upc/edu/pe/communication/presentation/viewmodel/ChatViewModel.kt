@@ -8,12 +8,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
 import oncontroldoctor.upc.edu.pe.communication.data.model.ChatMessage
 import oncontroldoctor.upc.edu.pe.communication.data.remote.ChatService
 import oncontroldoctor.upc.edu.pe.communication.domain.repository.ChatRepository
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.DoctorPatientLinkSimpleDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.PatientDto
+import oncontroldoctor.upc.edu.pe.treatment.data.dto.SymptomDto
 import oncontroldoctor.upc.edu.pe.treatment.presentation.model.ConnectionStatus
 import oncontroldoctor.upc.edu.pe.treatment.presentation.model.PatientConnectionState
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 class ChatViewModel(
     private val repository: ChatRepository
@@ -24,36 +31,82 @@ class ChatViewModel(
 
     private lateinit var chatService: ChatService
 
-    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val messages: StateFlow<List<ChatMessage>> = _messages
+    private val _initialMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val initialMessages: StateFlow<List<ChatMessage>> = _initialMessages
+
+    private val _realtimeMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val realtimeMessages: StateFlow<List<ChatMessage>> = _realtimeMessages
+
+    private var currentPage = 0
+    private val pageSize = 20
+    private var endReached = false
+    private var isLoading = false
+
+    private val _patient = MutableStateFlow<PatientDto?>(null)
+    val patient: StateFlow<PatientDto?> = _patient
+
+    private val _symptomText = MutableStateFlow<String>("")
+    val symptomText: StateFlow<String> = _symptomText
+
+
+    private var lastDoctorUuid: String = SessionHolder.getUserUuid()?: ""
+
+    fun loadInitialMessages(patientUuid: String) {
+        currentPage = 0
+        endReached = false
+        _initialMessages.value = emptyList()
+        loadMoreMessages(lastDoctorUuid, patientUuid)
+    }
+
+    fun loadMoreMessages(doctorUuid: String, patientUuid: String) {
+        if (isLoading || endReached) return
+        isLoading = true
+        viewModelScope.launch {
+            val newMessages = repository.getConversation(doctorUuid, patientUuid, currentPage, pageSize)
+            if (newMessages.isEmpty()) {
+                endReached = true
+            } else {
+                _initialMessages.value = newMessages + _initialMessages.value
+                currentPage++
+            }
+            isLoading = false
+        }
+    }
+
 
     @SuppressLint("CheckResult")
-    fun startChat(patientUuid: String){
-        chatService = ChatService(
-            patientUuid = patientUuid
-        )
+    fun startChat(patientUuid: String) {
+        chatService = ChatService(patientUuid = patientUuid)
         chatService.connect()
         chatService.incomingMessages
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe{ msg ->
-                _messages.update { it + msg }
+            .subscribe { msg ->
+                println("Mensaje recibido en ViewModel: ${msg.content}")
+                _realtimeMessages.update { it + msg }
             }
+        viewModelScope.launch {
+            _patient.value = repository.getPatient(patientUuid)
+        }
     }
 
     fun send(content: String){
-        chatService.sendMessage(content, "TEXT", null)
+        if (::chatService.isInitialized) {
+            chatService.sendMessage(content, "TEXT", null)
+        }
     }
 
     fun disconnect() {
-        chatService.disconnect()
+        if (::chatService.isInitialized) {
+            chatService.disconnect()
+        }
     }
 
     override fun onCleared() {
+        if (::chatService.isInitialized) {
+            chatService.disconnect()
+        }
         super.onCleared()
-        chatService.disconnect()
     }
-
-    private var lastDoctorUuid: String = ""
 
     fun load(doctorUuid: String){
         viewModelScope.launch {
@@ -65,9 +118,6 @@ class ChatViewModel(
         }
 
     }
-    fun reload(){
-        load(lastDoctorUuid)
-    }
 
     suspend fun DoctorPatientLinkSimpleDto.toPatientConnectionStateWithDetails(
         repository: ChatRepository
@@ -78,6 +128,32 @@ class ChatViewModel(
             connectionStatus = ConnectionStatus.valueOf(this.status),
             externalId = this.externalId
         )
+    }
+
+    fun loadSymptomText(symptomId: Long) {
+        viewModelScope.launch {
+            try {
+                val symptom: SymptomDto = repository.getSymptomLog(symptomId)
+                val formattedDate = formatDateTime(symptom.loggedAt)
+                val text = "Sobre ${symptom.symptomType} ocurrido el $formattedDate\n"
+                _symptomText.value = text
+            } catch (e: Exception) {
+                _symptomText.value = "Error obteniendo síntoma"
+            }
+        }
+    }
+
+    fun formatDateTime(dateTime: String): String{
+        val formattedDate = try {
+            val ldt = LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val instant = ldt.toInstant(ZoneOffset.UTC)
+            val zoned = instant.atZone(ZoneId.systemDefault())
+            val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+            zoned.format(fmt)
+        } catch (e: Exception) {
+            "Fecha inválida"
+        }
+        return formattedDate
     }
 
 

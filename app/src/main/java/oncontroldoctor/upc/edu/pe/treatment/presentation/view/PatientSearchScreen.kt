@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -57,7 +56,6 @@ fun PatientSearchScreen(
         .fillMaxSize()
         .padding(16.dp)) {
 
-        // Barra de búsqueda mejorada
         OutlinedTextField(
             value = query,
             onValueChange = {
@@ -72,8 +70,8 @@ fun PatientSearchScreen(
             placeholder = { Text("Ingrese nombre") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge, // Estilo de texto
-            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors( // Colores del TextField
+            textStyle = MaterialTheme.typography.bodyLarge,
+            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                 focusedLabelColor = MaterialTheme.colorScheme.primary,
@@ -86,7 +84,7 @@ fun PatientSearchScreen(
         when (uiState) {
             is PatientSearchUiState.Loading -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) // Color primario para el indicador
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -94,7 +92,7 @@ fun PatientSearchScreen(
                 val message = (uiState as PatientSearchUiState.Error).message
                 Text(
                     text = "Error: $message",
-                    color = MaterialTheme.colorScheme.error, // Color de error del tema
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(8.dp)
                 )
@@ -111,8 +109,8 @@ fun PatientSearchScreen(
                             Text(
                                 "Agregados",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface, // Color de texto principal
-                                modifier = Modifier.padding(bottom = 8.dp) // Espacio debajo del título
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
                         items(added) { patientState ->
@@ -126,7 +124,7 @@ fun PatientSearchScreen(
                             )
                         }
                         item {
-                            Spacer(modifier = Modifier.height(16.dp)) // Espacio entre secciones
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
 
@@ -135,8 +133,8 @@ fun PatientSearchScreen(
                             Text(
                                 "Encontrados",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface, // Color de texto principal
-                                modifier = Modifier.padding(bottom = 8.dp) // Espacio debajo del título
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
                         items(found) { patientState ->
@@ -145,11 +143,10 @@ fun PatientSearchScreen(
                                 viewModel,
                                 doctorUuid,
                                 onActivePatientClick = { patientUuid ->
-                                    // TODO: Navegar al panel de tratamientos del paciente con patientUuid
                                 }
                             )
                         }
-                    } else if (added.isEmpty()) { // Solo mostrar si no se encontraron pacientes y no hay agregados
+                    } else if (added.isEmpty()) {
                         item {
                             Text(
                                 "No se encontraron pacientes con ese nombre o correo electrónico.",
@@ -166,7 +163,7 @@ fun PatientSearchScreen(
                 Text(
                     "Introduce al menos 3 letras para comenzar la búsqueda.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, // Color de texto más suave
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(8.dp)
                 )
             }
@@ -184,29 +181,28 @@ fun PatientCard(
     val patient = state.patient
     val isActive = state.connectionStatus == ConnectionStatus.ACTIVE
 
-    // Determinar el color del borde de la tarjeta
     val cardBorderColor = if (isActive) {
-        MaterialTheme.colorScheme.primary // Color primario para pacientes activos
+        MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outline // Color de contorno para otros estados
+        MaterialTheme.colorScheme.outline
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .border(2.dp, cardBorderColor, MaterialTheme.shapes.medium) // Borde de color dinámico
+            .border(2.dp, cardBorderColor, MaterialTheme.shapes.medium)
             .then(
                 if (isActive) Modifier.clickable { onActivePatientClick(patient.uuid) }
                 else Modifier
             ),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Fondo de la tarjeta
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp), // Aumentar padding interno
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -214,24 +210,24 @@ fun PatientCard(
                 model = patient.photoUrl,
                 contentDescription = "Profile",
                 modifier = Modifier
-                    .size(64.dp) // Tamaño de imagen un poco más grande
+                    .size(64.dp)
                     .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape), // Borde más sutil
+                    .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.width(16.dp)) // Más espacio
+            Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "${patient.firstName} ${patient.lastName}",
-                    style = MaterialTheme.typography.titleMedium, // Título un poco más grande
-                    color = MaterialTheme.colorScheme.onSurface // Color de texto principal
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     patient.email,
-                    style = MaterialTheme.typography.bodyMedium, // Texto de cuerpo
-                    color = MaterialTheme.colorScheme.onSurfaceVariant // Color de texto secundario
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -241,7 +237,7 @@ fun PatientCard(
                         onClick = {
                             viewModel.invitePatient(doctorUuid, patient.uuid)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Color primario para invitar
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Invitar")
                     }
@@ -251,13 +247,13 @@ fun PatientCard(
                         Text(
                             "Solicitud enviada",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant // Texto más suave
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         TextButton(
                             onClick = {
                                 state.externalId?.let { viewModel.cancelRequest(it) }
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error) // Color de error para cancelar
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
                             Text("Cancelar")
                         }
@@ -268,12 +264,12 @@ fun PatientCard(
                         onClick = {
                             state.externalId?.let { viewModel.activateLink(it) }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer) // Color secundario para activar
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Text("Activar")
                     }
                 }
-                else -> {} // ACTIVE o DELETED no requieren acción
+                else -> {}
             }
         }
     }

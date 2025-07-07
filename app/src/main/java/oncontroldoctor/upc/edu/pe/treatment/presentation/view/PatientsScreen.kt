@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,7 +47,7 @@ import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.PatientsViewM
 fun PatientsScreen(
     viewModel: PatientsViewModel,
     doctorUuid: String,
-    onPatientClick: (String) -> Unit = {}
+    onPatientSelected: (PatientConnectionState) -> Unit
 ) {
     val patients by viewModel.patients.collectAsState()
 
@@ -55,10 +58,10 @@ fun PatientsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Pacientes", style = MaterialTheme.typography.headlineSmall) }, // Título más prominente
+                title = { Text("Mis Pacientes", style = MaterialTheme.typography.headlineSmall) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // Fondo primario
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary // Texto en onPrimary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -81,14 +84,16 @@ fun PatientsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 8.dp) // Añadir padding horizontal a la columna
+                    .padding(horizontal = 8.dp)
             ) {
                 items(patients) { state ->
                     PatientCardSimple(
                         state = state,
                         doctorUuid = doctorUuid,
                         onActivate = { externalId -> viewModel.activateLink(externalId) },
-                        onActivePatientClick = { patientUuid -> onPatientClick(patientUuid) }
+                        onActivePatientClick = { _ ->
+                            onPatientSelected(state)
+                        }
                     )
                 }
             }
@@ -107,53 +112,52 @@ fun PatientCardSimple(
     val patient = state.patient
     val isActive = state.connectionStatus == ConnectionStatus.ACTIVE
 
-    // Determinar el color del borde de la tarjeta
     val cardBorderColor = if (isActive) {
-        MaterialTheme.colorScheme.primary // Color primario para pacientes activos
+        MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outline // Color de contorno para otros estados
+        MaterialTheme.colorScheme.outline
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp) // Espaciado vertical entre tarjetas
-            .border(2.dp, cardBorderColor, MaterialTheme.shapes.medium) // Borde de color dinámico
+            .padding(vertical = 4.dp)
+            .border(2.dp, cardBorderColor, MaterialTheme.shapes.medium)
             .then(
                 if (isActive) Modifier.clickable { onActivePatientClick(patient.uuid) }
                 else Modifier
             ),
-        elevation = CardDefaults.cardElevation(4.dp), // Elevación sutil
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Fondo de la tarjeta
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp), // Aumentar padding interno
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
                 model = patient.photoUrl,
                 contentDescription = "Profile",
                 modifier = Modifier
-                    .size(64.dp) // Tamaño de imagen un poco más grande
+                    .size(64.dp)
                     .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape), // Borde más sutil
+                    .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.width(16.dp)) // Más espacio
+            Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "${patient.firstName} ${patient.lastName}",
-                    style = MaterialTheme.typography.titleMedium, // Título un poco más grande
-                    color = MaterialTheme.colorScheme.onSurface // Color de texto principal
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     patient.email,
-                    style = MaterialTheme.typography.bodyMedium, // Texto de cuerpo
-                    color = MaterialTheme.colorScheme.onSurfaceVariant // Color de texto secundario
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -163,12 +167,19 @@ fun PatientCardSimple(
                         state.externalId?.let { onActivate(it) }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer, // Color secundario para activar
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
                     Text("Activar")
                 }
+            } else{
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Entrar al chat",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

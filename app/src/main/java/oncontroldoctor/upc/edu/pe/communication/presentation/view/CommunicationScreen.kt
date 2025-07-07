@@ -43,7 +43,6 @@ import coil3.compose.AsyncImage
 import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.ChatViewModel
 import oncontroldoctor.upc.edu.pe.treatment.presentation.model.PatientConnectionState
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunicationScreen(
@@ -147,7 +146,7 @@ fun PatientChatCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Último mensaje o estado aquí...",
+                    text = "Último mensaje...",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

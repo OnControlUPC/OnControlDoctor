@@ -27,38 +27,40 @@ class ChatService(
     private val _incomingMessages = PublishProcessor.create<ChatMessage>()
     val incomingMessages: Flowable<ChatMessage> = _incomingMessages
     private val doctorUuid: String = SessionHolder.getUserUuid().toString()
-    var token: String = SessionHolder.getToken() ?: ""
-
+    val token: String = SessionHolder.getToken() ?: ""
     @SuppressLint("CheckResult")
     fun connect() {
-        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, WS_BASE_URL)
-        val headers = listOf(StompHeader("Authorization", token))
+        // 1) Construye la URL correcta
+        val url = "$WS_BASE_URL/ws/websocket"
+        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, url)
+
+        // 2) Headers de autenticación
+        val headers = listOf(StompHeader("Authorization", "Bearer $token"))
         stompClient.connect(headers)
 
-
+        // 3) Observa el ciclo de vida
         lifecycleDisposable = stompClient.lifecycle()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { lifecycleEvent ->
-                when (lifecycleEvent.type) {
+            .subscribe { event ->
+                when (event.type) {
                     LifecycleEvent.Type.OPENED -> {
-                        println("STOMP Conectado: ${lifecycleEvent.message}")
+                        println("STOMP ▶ Conectado con éxito")
                         subscribeToChatTopic()
                     }
                     LifecycleEvent.Type.ERROR -> {
-                        println("STOMP Error: ${lifecycleEvent.exception?.message}")
-                        // Handle reconnection logic or notify UI
+                        println("STOMP ✖ Error en conexión: ${event.exception?.message}")
                     }
                     LifecycleEvent.Type.CLOSED -> {
-                        println("STOMP Desconectado: ${lifecycleEvent.message}")
-                        // Handle reconnection logic or notify UI
+                        println("STOMP ■ Conexión cerrada")
                     }
                     LifecycleEvent.Type.FAILED_SERVER_HEARTBEAT -> {
-                        println("STOMP Heartbeat fallido: ${lifecycleEvent.message}")
+                        println("STOMP ⚠ Heartbeat fallido")
                     }
                 }
             }
     }
+
 
     private fun subscribeToChatTopic() {
         val destination = "/topic/chat.$doctorUuid.$patientUuid"
@@ -70,6 +72,7 @@ class ChatService(
                 gson.fromJson(stompMessage.payload, ChatMessage::class.java)
             }
             .subscribe({ chatMessage: ChatMessage ->
+                println("Mensaje recibido en ChatService: ${chatMessage.content}")
                 _incomingMessages.onNext(chatMessage)
             }, { throwable: Throwable ->
                 println("Error al suscribirse al topic $destination: ${throwable.message}")
@@ -82,12 +85,19 @@ class ChatService(
         type: String,
         fileUrl: String? = null
     ) {
+        if (!::stompClient.isInitialized || !stompClient.isConnected) {
+            println("Cannot send message, StompClient not connected.")
+            return
+        }
         val payload = ChatMessage(
+            id = null,
             content = content,
             type = type,
             fileUrl = fileUrl,
             senderRole = "ROLE_ADMIN",
-            senderUuid = doctorUuid
+            doctorUuid = doctorUuid,
+            patientUuid = patientUuid,
+            createdAt = null
         )
         val jsonPayload = gson.toJson(payload)
         val destination = "/app/chat/$doctorUuid/$patientUuid/send"
@@ -96,9 +106,10 @@ class ChatService(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                println("Mensaje enviado con éxito: $content")
+                println("Message sent successfully: $content")
             }, { throwable: Throwable ->
-                println("Error al enviar mensaje: ${throwable.message}")
+                println("Error sending message: ${throwable.message}")
+                throwable.printStackTrace()
             })
     }
 
