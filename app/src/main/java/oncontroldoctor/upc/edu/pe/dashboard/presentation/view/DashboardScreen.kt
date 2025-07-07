@@ -26,13 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
+import oncontroldoctor.upc.edu.pe.communication.presentation.ChatModule
 import oncontroldoctor.upc.edu.pe.communication.presentation.view.CommunicationScreen
-import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.CommunicationViewModel
+import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.ChatViewModel
 import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
 import oncontroldoctor.upc.edu.pe.treatment.presentation.TreatmentModule
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientSearchScreen
@@ -42,7 +44,8 @@ import oncontroldoctor.upc.edu.pe.treatment.presentation.viewmodel.PatientsViewM
 
 @Composable
 fun DashboardScreen(
-    dashboardViewModel: DashboardViewModel
+    dashboardViewModel: DashboardViewModel,
+    navControllerG: NavController
 ) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -53,10 +56,9 @@ fun DashboardScreen(
     Scaffold(
         bottomBar = {
             BottomAppBar(
-                containerColor = MaterialTheme.colorScheme.surface, // Fondo de la barra de navegación
-                tonalElevation = 8.dp // Elevación sutil para separarla del contenido
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
             ) {
-                // Ítems del lado izquierdo
                 navItemsLeft.forEach { route ->
                     BottomBarItem(
                         icon = when (route) {
@@ -78,13 +80,12 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Botón de búsqueda central
                 FloatingActionButton(
                     onClick = { navController.navigate("search") },
                     containerColor = MaterialTheme.colorScheme.primary,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(60.dp) // FAB size
+                        .size(60.dp)
                         .align(Alignment.CenterVertically)
                         .offset(y = (-4).dp)
                 ) {
@@ -96,7 +97,6 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Ítems del lado derecho
                 navItemsRight.forEach { route ->
                     BottomBarItem(
                         icon = when (route) {
@@ -134,27 +134,20 @@ fun DashboardScreen(
 
                 val patientsViewModel: PatientsViewModel = viewModel(factory = patientsViewModelFactory)
 
-                LaunchedEffect(doctorUuid, patientsViewModel) { // Clave también con el ViewModel para asegurar que se llama si la instancia cambia (aunque no debería con viewModel())
+                LaunchedEffect(doctorUuid, patientsViewModel) {
                     if (doctorUuid.isNotEmpty()) {
-                        patientsViewModel.loadPatients(doctorUuid) // Reemplaza con el nombre real de tu método
+                        patientsViewModel.loadPatients(doctorUuid)
                     }
                 }
 
                 PatientsScreen(
                     viewModel = patientsViewModel,
-                    doctorUuid = doctorUuid
-                )
-            }
-            composable("messages") {
-                val communicationViewModel: CommunicationViewModel = viewModel()
-                CommunicationScreen(
-                    viewModel = communicationViewModel,
-                    onPatientClick = { patientUuid ->
-                        navController.navigate("chat/$patientUuid")
+                    doctorUuid = doctorUuid,
+                    onPatientSelected = { patientState ->
+                        navController.navigate("panel/${patientState.patient.uuid}")
                     }
                 )
             }
-            composable("settings") { /* Configuraciones del doctor */ }
             composable("search") {
                 val viewModel = TreatmentModule.getPatientSearchViewModel()
                 val doctorUuid = SessionHolder.getUserUuid() ?: ""
@@ -166,11 +159,28 @@ fun DashboardScreen(
                     }
                 )
             }
+            composable("messages") {
+                val doctorUuid = SessionHolder.getUserUuid() ?: ""
+                val chatViewModelFactory = ChatModule.provideChatViewModelFactory()
+                val chatViewModel: ChatViewModel = viewModel(factory = chatViewModelFactory)
+                LaunchedEffect(doctorUuid, chatViewModel) {
+                    chatViewModel.load(doctorUuid)
+                }
+                CommunicationScreen(
+                    viewModel = chatViewModel,
+                    doctorUuid = doctorUuid,
+                    onPatientClick = { patientUuid ->
+                        navControllerG.navigate("messages/$patientUuid")
+                    }
+                )
+            }
+            composable("settings") { /* Configuraciones del doctor */ }
             composable("panel/{patientUuid}") { backStackEntry ->
                 val patientUuid = backStackEntry.arguments?.getString("patientUuid") ?: ""
-                val repository = TreatmentModule.provideTreatmentRepository() // Obtén el repositorio, no el factory
+                val repository = TreatmentModule.provideTreatmentRepository()
 
                 PatientTreatmentPanelScreen(
+                    navControllerG = navControllerG,
                     patientUuid = patientUuid,
                     repository = repository,
                     onTreatmentSelected = {},
@@ -191,7 +201,7 @@ fun BottomBarItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant // Color para seleccionado e inactivo
+    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
 
     TextButton(
         onClick = onClick
@@ -200,7 +210,7 @@ fun BottomBarItem(
             Icon(imageVector = icon, contentDescription = label, tint = color)
             Text(
                 text = label.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelMedium, // Usar labelMedium para mejor legibilidad
+                style = MaterialTheme.typography.labelMedium,
                 color = color
             )
         }

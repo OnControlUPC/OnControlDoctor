@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import oncontroldoctor.upc.edu.pe.shared.presentation.ui.theme.*
 import oncontroldoctor.upc.edu.pe.treatment.data.dto.SymptomDto
 import java.time.LocalDateTime
@@ -22,7 +23,9 @@ import java.time.format.DateTimeFormatter
 fun SymptomsList(
     symptoms: List<SymptomDto>,
     from: LocalDateTime,
-    to: LocalDateTime
+    to: LocalDateTime,
+    patientUuid: String? = null,
+    navControllerG: NavController
 ) {
     val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
     val outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -30,38 +33,34 @@ fun SymptomsList(
     val grouped = symptoms
         .mapNotNull {
             val date = try { LocalDateTime.parse(it.loggedAt, formatter) } catch (e: Exception) { null }
-            // Filtra los síntomas que están dentro del rango de fechas [from, to]
-            if (date != null && !date.isBefore(from) && !date.isAfter(to)) // Simplificación de la condición de rango
+            if (date != null && !date.isBefore(from) && !date.isAfter(to))
                 it to date
             else null
         }
-        .sortedByDescending { it.second } // Ordenar por fecha de registro descendente
+        .sortedByDescending { it.second }
         .groupBy { (_, date) ->
-            // Agrupar por semanas, donde la semana comienza desde 'from'
             val daysFromStart = java.time.Duration.between(from.toLocalDate().atStartOfDay(), date.toLocalDate().atStartOfDay()).toDays().toInt()
             val groupStart = from.toLocalDate().plusDays((daysFromStart / 7) * 7L)
-            val groupEnd = groupStart.plusDays(6).coerceAtMost(to.toLocalDate()) // Asegura que el fin del grupo no exceda 'to'
+            val groupEnd = groupStart.plusDays(6).coerceAtMost(to.toLocalDate())
             groupStart to groupEnd
         }
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) { // Asegura que la LazyColumn ocupe todo el espacio
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         grouped.forEach { (range, items) ->
             item {
-                // Encabezado de la semana con estilo similar a DateHeader
                 Text(
                     text = "Del ${range.first.format(outputFormatter)} al ${range.second.format(outputFormatter)}",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary, // Usar el color primario del tema
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp) // Padding consistente
-                        .padding(top = 8.dp) // Padding superior para separación
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(top = 8.dp)
                 )
             }
             items(items) { (symptom) ->
                 var expanded by remember { mutableStateOf(false) }
 
-                // Determinar los colores de la tarjeta basados en la severidad del síntoma
                 val cardColor = when (symptom.severity) {
                     "MILD" -> SeverityMildBackground
                     "MODERATE" -> SeverityModerateBackground
@@ -80,11 +79,11 @@ fun SymptomsList(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp) // Padding consistente con otras tarjetas
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                         .clickable { expanded = !expanded },
                     colors = CardDefaults.cardColors(containerColor = cardColor),
                     shape = RoundedCornerShape(12.dp), // Esquinas redondeadas
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Elevación sutil
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(Modifier.padding(16.dp)) { // Padding interno de la tarjeta
                         Row(
@@ -118,19 +117,21 @@ fun SymptomsList(
                             }
                             // Botón de contacto
                             IconButton(
-                                onClick = { /* Contactar, sin acción definida aquí */ },
-                                modifier = Modifier.size(40.dp) // Tamaño del icono
+                                onClick = {
+                                    navControllerG.navigate("messages/${patientUuid}?symptomId=${symptom.id}")
+                                },
+                                modifier = Modifier.size(40.dp)
                             ) {
                                 Icon(
                                     Icons.Filled.MailOutline,
                                     contentDescription = "Contactar",
-                                    tint = MaterialTheme.colorScheme.primary // Usar el color primario del tema
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
                         if (expanded) {
                             Spacer(Modifier.height(8.dp))
-                            Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), thickness = 1.dp) // Divisor sutil
+                            Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), thickness = 1.dp)
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 text = "Nota: ${symptom.notes}",

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
 import oncontroldoctor.upc.edu.pe.shared.presentation.ui.theme.*
@@ -46,6 +47,7 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientTreatmentPanelScreen(
+    navControllerG: NavController,
     patientUuid: String,
     repository: TreatmentRepository,
     onTreatmentSelected: () -> Unit,
@@ -185,7 +187,7 @@ fun PatientTreatmentPanelScreen(
                         LaunchedEffect(from, to, patientUuid) {
                             viewModel.loadSymptoms(patientUuid, from, to)
                         }
-                        SymptomsList(symptoms, from, to)
+                        SymptomsList(symptoms, from, to, patientUuid, navControllerG = navControllerG)
 
                         Button(
                             onClick = {
