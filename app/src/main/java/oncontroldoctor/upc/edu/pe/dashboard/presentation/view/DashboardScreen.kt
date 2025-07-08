@@ -57,7 +57,7 @@ fun DashboardScreen(
     val navItemsRight = listOf("messages", "settings")
 
     val routeLabels = mapOf(
-        "home" to "Hogar",
+        "home" to "Inicio",
         "patients" to "Pacientes",
         "messages" to "Mensajes",
         "settings" to "Opciones"
