@@ -222,5 +222,13 @@ class TreatmentRepositoryImpl(
             dto.copy(scheduledAt = convertUtcToLima(dto.scheduledAt))
         }
     }
+    override suspend fun getDoctorAppointments(doctorUuid: String): List<AppointmentSimpleDto> {
+        val response = authorizedCall { token ->
+            service.getAppointments(doctorUuid, token)
+        }.getOrElse { throw it }
+
+        return response
+    }
+
 
 }
