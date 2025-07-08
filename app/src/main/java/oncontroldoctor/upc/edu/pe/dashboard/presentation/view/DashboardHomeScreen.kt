@@ -42,6 +42,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavController
 
 
 @SuppressLint("ContextCastToActivity")
@@ -59,8 +60,10 @@ fun SetStatusBarColor(color: Color, darkIcons: Boolean = false) {
 
 @Composable
 fun DashboardHomeScreen(
-    dashboardViewModel: DashboardViewModel
-) {
+    dashboardViewModel: DashboardViewModel,
+    navController: NavController
+)
+ {
     LaunchedEffect(Unit) {
         dashboardViewModel.loadProfile()
     }
@@ -116,7 +119,8 @@ fun DashboardHomeScreen(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.onPrimary, CircleShape), // Usa onPrimary
+                            .border(2.dp, MaterialTheme.colorScheme.onPrimary, CircleShape)
+                            .clickable { navController.navigate("profile") }, // <- navegación al hacer tap
                         contentScale = ContentScale.Crop
                     )
                 }

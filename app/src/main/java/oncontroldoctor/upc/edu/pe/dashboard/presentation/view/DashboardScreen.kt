@@ -54,7 +54,15 @@ fun DashboardScreen(
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     val navItemsLeft = listOf("home", "patients")
-    val navItemsRight = listOf("messages", "settings", "profile")
+    val navItemsRight = listOf("messages", "settings")
+
+    val routeLabels = mapOf(
+        "home" to "Hogar",
+        "patients" to "Pacientes",
+        "messages" to "Mensajes",
+        "settings" to "Opciones"
+    )
+
 
     Scaffold(
         bottomBar = {
@@ -69,7 +77,7 @@ fun DashboardScreen(
                             "patients" -> Icons.Default.Person
                             else -> Icons.Default.Home
                         },
-                        label = route,
+                        label = routeLabels[route] ?: route,
                         selected = currentRoute == route,
                         onClick = {
                             navController.navigate(route) {
@@ -105,10 +113,9 @@ fun DashboardScreen(
                         icon = when (route) {
                             "messages" -> Icons.Default.MailOutline
                             "settings" -> Icons.Default.Settings
-                            "profile" -> Icons.Default.Person
                             else -> Icons.Default.Settings
                         },
-                        label = route,
+                        label = routeLabels[route] ?: route,
                         selected = currentRoute == route,
                         onClick = {
                             navController.navigate(route) {
@@ -128,9 +135,12 @@ fun DashboardScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            composable("home") { DashboardHomeScreen(
-                dashboardViewModel = dashboardViewModel
-            ) }
+            composable("home") {
+                DashboardHomeScreen(
+                    dashboardViewModel = dashboardViewModel,
+                    navController = navController
+                )
+            }
             composable("patients") {
                 val doctorUuid = SessionHolder.getUserUuid() ?: ""
 
@@ -178,8 +188,7 @@ fun DashboardScreen(
                     }
                 )
             }
-            composable("settings") { /* Configuraciones del doctor */ }
-            composable("profile") {
+            composable("settings") {
                 val profileViewModelFactory = ProfileModule.getProfileViewModelFactory()
                 val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
 
