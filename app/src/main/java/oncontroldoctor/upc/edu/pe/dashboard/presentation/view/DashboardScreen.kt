@@ -36,6 +36,9 @@ import oncontroldoctor.upc.edu.pe.communication.presentation.ChatModule
 import oncontroldoctor.upc.edu.pe.communication.presentation.view.CommunicationScreen
 import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.ChatViewModel
 import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
+import oncontroldoctor.upc.edu.pe.profile.presentation.ProfileModule
+import oncontroldoctor.upc.edu.pe.profile.presentation.view.ProfileScreen
+import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.ProfileViewModel
 import oncontroldoctor.upc.edu.pe.treatment.presentation.TreatmentModule
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientSearchScreen
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientTreatmentPanelScreen
@@ -51,7 +54,7 @@ fun DashboardScreen(
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     val navItemsLeft = listOf("home", "patients")
-    val navItemsRight = listOf("messages", "settings")
+    val navItemsRight = listOf("messages", "settings", "profile")
 
     Scaffold(
         bottomBar = {
@@ -102,6 +105,7 @@ fun DashboardScreen(
                         icon = when (route) {
                             "messages" -> Icons.Default.MailOutline
                             "settings" -> Icons.Default.Settings
+                            "profile" -> Icons.Default.Person
                             else -> Icons.Default.Settings
                         },
                         label = route,
@@ -175,6 +179,13 @@ fun DashboardScreen(
                 )
             }
             composable("settings") { /* Configuraciones del doctor */ }
+            composable("profile") {
+                val profileViewModelFactory = ProfileModule.getProfileViewModelFactory()
+                val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
+
+                ProfileScreen(viewModel = profileViewModel, navController = navControllerG)
+            }
+
             composable("panel/{patientUuid}") { backStackEntry ->
                 val patientUuid = backStackEntry.arguments?.getString("patientUuid") ?: ""
                 val repository = TreatmentModule.provideTreatmentRepository()
