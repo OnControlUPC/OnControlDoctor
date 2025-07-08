@@ -186,32 +186,11 @@ fun DashboardHomeScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ActionTile(title = "Agregar un paciente", icon = Icons.Default.Person) { /* TODO */ }
                 ActionTile(
                     title = "Crear cita",
                     icon = Icons.Default.MailOutline,
                     onClick = { /* TODO */ }
                 )
-                ActionTile(
-                    title = "Panel de sintomas",
-                    icon = Icons.Default.Face,
-                    onClick = {
-                        if (plan?.symptomTrackingEnabled == true) {
-                            // Aquí puedes implementar la lógica para el panel de síntomas
-                        } else {
-                            Toast.makeText(context, "Funcionalidad no disponible en tu plan", Toast.LENGTH_SHORT).show()
-                        }
-                    })
-                ActionTile(
-                    title = "Ajustar alertas",
-                    icon = Icons.Default.Notifications,
-                    onClick = {
-                        if (plan?.customRemindersEnabled == true) {
-                            // Aquí puedes implementar la lógica para ajustar alertas
-                        } else {
-                            Toast.makeText(context, "Funcionalidad no disponible en tu plan", Toast.LENGTH_SHORT).show()
-                        }
-                    })
             }
         }
     }
