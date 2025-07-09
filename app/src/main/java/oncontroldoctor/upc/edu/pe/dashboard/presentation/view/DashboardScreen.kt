@@ -36,6 +36,9 @@ import oncontroldoctor.upc.edu.pe.communication.presentation.ChatModule
 import oncontroldoctor.upc.edu.pe.communication.presentation.view.CommunicationScreen
 import oncontroldoctor.upc.edu.pe.communication.presentation.viewmodel.ChatViewModel
 import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
+import oncontroldoctor.upc.edu.pe.profile.presentation.ProfileModule
+import oncontroldoctor.upc.edu.pe.profile.presentation.view.ProfileScreen
+import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.ProfileViewModel
 import oncontroldoctor.upc.edu.pe.treatment.presentation.TreatmentModule
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientSearchScreen
 import oncontroldoctor.upc.edu.pe.treatment.presentation.view.PatientTreatmentPanelScreen
@@ -53,6 +56,14 @@ fun DashboardScreen(
     val navItemsLeft = listOf("home", "patients")
     val navItemsRight = listOf("messages", "settings")
 
+    val routeLabels = mapOf(
+        "home" to "Inicio",
+        "patients" to "Pacientes",
+        "messages" to "Mensajes",
+        "settings" to "Opciones"
+    )
+
+
     Scaffold(
         bottomBar = {
             BottomAppBar(
@@ -66,7 +77,7 @@ fun DashboardScreen(
                             "patients" -> Icons.Default.Person
                             else -> Icons.Default.Home
                         },
-                        label = route,
+                        label = routeLabels[route] ?: route,
                         selected = currentRoute == route,
                         onClick = {
                             navController.navigate(route) {
@@ -104,7 +115,7 @@ fun DashboardScreen(
                             "settings" -> Icons.Default.Settings
                             else -> Icons.Default.Settings
                         },
-                        label = route,
+                        label = routeLabels[route] ?: route,
                         selected = currentRoute == route,
                         onClick = {
                             navController.navigate(route) {
@@ -124,9 +135,12 @@ fun DashboardScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            composable("home") { DashboardHomeScreen(
-                dashboardViewModel = dashboardViewModel
-            ) }
+            composable("home") {
+                DashboardHomeScreen(
+                    dashboardViewModel = dashboardViewModel,
+                    navController = navController
+                )
+            }
             composable("patients") {
                 val doctorUuid = SessionHolder.getUserUuid() ?: ""
 
@@ -174,7 +188,13 @@ fun DashboardScreen(
                     }
                 )
             }
-            composable("settings") { /* Configuraciones del doctor */ }
+            composable("settings") {
+                val profileViewModelFactory = ProfileModule.getProfileViewModelFactory()
+                val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
+
+                ProfileScreen(viewModel = profileViewModel, navController = navControllerG)
+            }
+
             composable("panel/{patientUuid}") { backStackEntry ->
                 val patientUuid = backStackEntry.arguments?.getString("patientUuid") ?: ""
                 val repository = TreatmentModule.provideTreatmentRepository()

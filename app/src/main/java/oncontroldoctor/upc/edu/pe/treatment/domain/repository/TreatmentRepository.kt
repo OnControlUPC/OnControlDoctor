@@ -41,4 +41,5 @@ interface TreatmentRepository {
     suspend fun createAppointment(request: CreateAppointmentDto): Boolean
     suspend fun getProcedureCalendar(externalId: String): List<ProcedureCalendarDto>
     suspend fun getTreatmentsByPatient(patientUuid: String): List<Treatment>
+    suspend fun getDoctorAppointments(doctorUuid: String): List<AppointmentSimpleDto>
 }
