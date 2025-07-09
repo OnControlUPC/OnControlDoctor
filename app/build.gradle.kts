@@ -6,6 +6,7 @@ plugins {
     //ksp
     id("com.google.devtools.ksp")
     id("kotlin-kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -78,5 +79,12 @@ dependencies {
     implementation(libs.rxjava)
     implementation(libs.rxandroid)
     implementation(libs.stompprotocolandroid)
+
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation("com.google.firebase:firebase-analytics")
+
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.1.1")
+
 
 }
