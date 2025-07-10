@@ -111,7 +111,6 @@ class DashboardViewModel(
             try {
                 val token = SessionHolder.getToken()
                 if (token.isNullOrBlank()) {
-                    Log.e("DashboardVM", "Token nulo o vacío")
                     _appointmentsDisplay.value = emptyList()
                     return@launch
                 }

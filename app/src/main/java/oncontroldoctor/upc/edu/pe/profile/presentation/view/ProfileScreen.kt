@@ -32,37 +32,41 @@ fun ProfileScreen(
         }
     } else {
         profile?.let { doctor ->
-            Column(
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(doctor.urlPhoto),
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("${doctor.firstName} ${doctor.lastName}", style = MaterialTheme.typography.headlineSmall)
-                Text(doctor.email, style = MaterialTheme.typography.bodyMedium)
-                Text("Especialidad: ${doctor.specialty}", style = MaterialTheme.typography.bodyMedium)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.7f),
+                contentAlignment = Alignment.Center
+            ){
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(doctor.urlPhoto),
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("${doctor.firstName} ${doctor.lastName}", style = MaterialTheme.typography.headlineSmall)
+                    Text(doctor.email, style = MaterialTheme.typography.bodyMedium)
+                    Text("Especialidad: ${doctor.specialty}", style = MaterialTheme.typography.bodyMedium)
 
-                Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                Button(onClick = {
-                    SessionHolder.clearSession()
-                    navController.navigate("login") {
-                        popUpTo("dashboard") { inclusive = true }
+                    Button(onClick = {
+                        SessionHolder.clearSession()
+                        navController.navigate("login") {
+                            popUpTo("dashboard") { inclusive = true }
+                        }
+                    }) {
+                        Text("Cerrar sesión")
                     }
-                }) {
-                    Text("Cerrar sesión")
                 }
             }
-        } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No se pudo cargar el perfil.")
         }
+
     }
 }

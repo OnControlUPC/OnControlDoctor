@@ -7,11 +7,21 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toFile
 import coil3.compose.AsyncImage
@@ -48,7 +59,8 @@ fun ImageUploadSection(
     token: String,
     userId: Long,
     urlPhoto: String,
-    onImageUploaded: (String) -> Unit
+    onImageUploaded: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var uploadInProgress by remember { mutableStateOf(false) }
 
@@ -130,34 +142,65 @@ fun ImageUploadSection(
         }
     }
 
-    Column {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(300.dp)
+                .size(200.dp)
                 .clip(CircleShape)
-                .border(1.dp, Color.Gray, shape = CircleShape)
-                .background(Color.LightGray, shape = CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.outline, shape = CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape)
         ) {
-            if (urlPhoto. isNotBlank()) {
+            if (urlPhoto.isNotBlank()) {
                 AsyncImage(
                     model = urlPhoto,
                     contentDescription = "Selected profile photo",
                     modifier = Modifier
-                        .size(300.dp)
-                        .clip(CircleShape)
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
             } else {
-                Text("No image yet", color = Color.DarkGray)
+                Text(
+                    "No hay imagen",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
-        Button(onClick = {
-            imagePickerLauncher.launch("image/*")
-        }) {
-            Text("Select Profile Photo")
+        Button(
+            onClick = { imagePickerLauncher.launch("image/*") },
+            modifier = Modifier
+                .fillMaxWidth(0.8f),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text("Seleccionar Foto de Perfil")
         }
         if (uploadInProgress) {
-            Text("Uploading image...")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Cargando imagen...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 

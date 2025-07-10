@@ -7,7 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,8 +90,16 @@ fun DashboardHomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Bienvenido", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineSmall)
-                    Text(profileName, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Bienvenido",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text(
+                        profileName,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -127,36 +135,51 @@ fun DashboardHomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Próximas citas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                TextButton(onClick = { /* TODO: Navegar a ver más citas */ }) {
-                    Text("Ver más", color = MaterialTheme.colorScheme.primary)
-                }
+                Text(
+                    "Próximas citas",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             if (appointments.isNotEmpty()) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     val sortedAppointments = appointments.sortedBy { it.scheduledAt }
                     items(sortedAppointments.take(10)) { cita ->
                         val (fecha, hora) = formatDateTime(cita.scheduledAt)
                         val tipo = if (!cita.meetingUrl.isNullOrEmpty()) "Virtual" else cita.locationName ?: "Presencial"
 
                         Card(
-                            modifier = Modifier.width(220.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(110.dp), // Más estilizada y proporcionada
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(6.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text(cita.patientName, style = MaterialTheme.typography.titleMedium)
                                 Text(tipo, style = MaterialTheme.typography.bodyMedium)
-                                Text(hora, style = MaterialTheme.typography.bodySmall)
-                                Text(fecha, style = MaterialTheme.typography.labelSmall)
+                                Row(
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(hora, style = MaterialTheme.typography.bodySmall)
+                                    Text(fecha, style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
                     }
-
                 }
             } else {
                 Text(
@@ -166,9 +189,6 @@ fun DashboardHomeScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
         }
     }
 }
