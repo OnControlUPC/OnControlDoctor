@@ -1,6 +1,7 @@
 package oncontroldoctor.upc.edu.pe.authentication.data.repository
 
 import oncontroldoctor.upc.edu.pe.authentication.data.model.SignInRequest
+import oncontroldoctor.upc.edu.pe.authentication.data.model.SignInWithGoogleRequest
 import oncontroldoctor.upc.edu.pe.authentication.data.model.SignUpRequest
 import oncontroldoctor.upc.edu.pe.authentication.data.model.toDomain
 import oncontroldoctor.upc.edu.pe.authentication.data.remote.AuthService
@@ -22,6 +23,13 @@ class AuthRepositoryImpl(
         return plainCall {
             service.signUp(request)
         }.isSuccess
+    }
+
+    override suspend fun signInWithGoogle(request: SignInWithGoogleRequest): UserSession?{
+        return plainCall {
+            service.signInWithGoogle(request)
+        }.getOrNull()?.toDomain()
+
     }
 
 }

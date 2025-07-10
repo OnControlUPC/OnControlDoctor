@@ -3,46 +3,35 @@ package oncontroldoctor.upc.edu.pe.dashboard.presentation.view
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.Window
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-
+import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import oncontroldoctor.upc.edu.pe.authentication.data.local.SessionHolder
+import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @SuppressLint("ContextCastToActivity")
 @Composable
@@ -56,29 +45,33 @@ fun SetStatusBarColor(color: Color, darkIcons: Boolean = false) {
     }
 }
 
-
 @Composable
 fun DashboardHomeScreen(
-    dashboardViewModel: DashboardViewModel
+    dashboardViewModel: DashboardViewModel,
+    navController: NavController
 ) {
+    val context = LocalContext.current
+    val primaryColor = MaterialTheme.colorScheme.primary
+    SetStatusBarColor(primaryColor, darkIcons = false)
+
+    val profile by dashboardViewModel.profile.collectAsState()
+    val appointments by dashboardViewModel.appointmentsDisplay.collectAsState()
+    val profileName = "Dr. " + (profile?.lastName ?: "Usuario")
+    val profileImageUrl = profile?.urlPhoto
+
+    val headerHeight = 120.dp
+
     LaunchedEffect(Unit) {
         dashboardViewModel.loadProfile()
     }
 
-    val context = LocalContext.current
-    val primaryColor = MaterialTheme.colorScheme.primary
-    SetStatusBarColor(primaryColor, darkIcons = false) // Asegura que los iconos de la barra de estado sean claros sobre el color primario
-    val profile by dashboardViewModel.profile.collectAsState()
-    val profileName = "Dr. " + (profile?.lastName ?: "Usuario")
-    val profileImageUrl = profile?.urlPhoto
-    val headerHeight = 120.dp
-    val plan by dashboardViewModel.planState.collectAsState()
-    val citas = listOf(
-        Appointment("Juan Pérez", "Consulta general", "10:00 AM", "24.06.2025"),
-        Appointment("María López", "Control", "12:00 PM", "25.06.2025"),
-        Appointment("Carlos Ruiz", "Revisión anual", "09:30 AM", "26.06.2025"),
-        Appointment("Laura García", "Seguimiento", "01:00 PM", "27.06.2025")
-    )
+    val token = SessionHolder.getToken()
+
+    LaunchedEffect(token) {
+        if (!token.isNullOrBlank()) {
+            dashboardViewModel.loadAppointmentsFromCalendar(token)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Header superior
@@ -97,15 +90,23 @@ fun DashboardHomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Bienvenido", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineSmall) // Usa onPrimary
-                    Text(profileName, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium) // Usa onPrimary
+                    Text(
+                        "Bienvenido",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text(
+                        profileName,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = "Notificaciones",
-                        tint = MaterialTheme.colorScheme.onPrimary, // Usa onPrimary
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .padding(end = 12.dp)
                             .size(32.dp)
@@ -116,12 +117,11 @@ fun DashboardHomeScreen(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.onPrimary, CircleShape), // Usa onPrimary
+                            .border(2.dp, MaterialTheme.colorScheme.onPrimary, CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 }
             }
-
         }
 
         Column(
@@ -129,37 +129,54 @@ fun DashboardHomeScreen(
                 .fillMaxSize()
                 .padding(top = headerHeight + 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            // Sección "Próximas Citas"
-
+            // Próximas citas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Próximas citas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                TextButton(onClick = { /* Navegar a citas completas */ }) {
-                    Text("Ver más", color = MaterialTheme.colorScheme.primary) // Color primario para el botón
-                }
+                Text(
+                    "Próximas citas",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp)) // Espacio entre título y lista
+            Spacer(modifier = Modifier.height(8.dp))
 
-            if (citas.isNotEmpty()) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp) // Espacio entre tarjetas
+            if (appointments.isNotEmpty()) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(citas.take(5)) { cita ->
+                    val sortedAppointments = appointments.sortedBy { it.scheduledAt }
+                    items(sortedAppointments.take(10)) { cita ->
+                        val (fecha, hora) = formatDateTime(cita.scheduledAt)
+                        val tipo = if (!cita.meetingUrl.isNullOrEmpty()) "Virtual" else cita.locationName ?: "Presencial"
+
                         Card(
-                            modifier = Modifier.width(220.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(4.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Fondo de tarjeta
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(110.dp), // Más estilizada y proporcionada
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(6.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(cita.paciente, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                                Text(cita.descripcion, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) // Color más suave
-                                Text(cita.hora, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) // Color más suave
-                                Text(cita.fecha, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall) // Color más suave
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(cita.patientName, style = MaterialTheme.typography.titleMedium)
+                                Text(tipo, style = MaterialTheme.typography.bodyMedium)
+                                Row(
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(hora, style = MaterialTheme.typography.bodySmall)
+                                    Text(fecha, style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
                     }
@@ -170,49 +187,11 @@ fun DashboardHomeScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
-                Spacer(Modifier.height(24.dp))
-            }
-
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sección "Acciones rápidas"
-            Text("Acciones rápidas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.height(8.dp))
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ActionTile(title = "Agregar un paciente", icon = Icons.Default.Person) { /* TODO */ }
-                ActionTile(
-                    title = "Crear cita",
-                    icon = Icons.Default.MailOutline,
-                    onClick = { /* TODO */ }
-                )
-                ActionTile(
-                    title = "Panel de sintomas",
-                    icon = Icons.Default.Face,
-                    onClick = {
-                        if (plan?.symptomTrackingEnabled == true) {
-                            // Aquí puedes implementar la lógica para el panel de síntomas
-                        } else {
-                            Toast.makeText(context, "Funcionalidad no disponible en tu plan", Toast.LENGTH_SHORT).show()
-                        }
-                    })
-                ActionTile(
-                    title = "Ajustar alertas",
-                    icon = Icons.Default.Notifications,
-                    onClick = {
-                        if (plan?.customRemindersEnabled == true) {
-                            // Aquí puedes implementar la lógica para ajustar alertas
-                        } else {
-                            Toast.makeText(context, "Funcionalidad no disponible en tu plan", Toast.LENGTH_SHORT).show()
-                        }
-                    })
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 }
-
 
 @Composable
 fun ActionTile(
@@ -221,9 +200,9 @@ fun ActionTile(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val bgColor = if (enabled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) // Color más suave para deshabilitado
-    val iconColor = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) // Icono más tenue para deshabilitado
-    val textColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Texto más tenue para deshabilitado
+    val bgColor = if (enabled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    val iconColor = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    val textColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
 
     Card(
         modifier = Modifier
@@ -260,9 +239,14 @@ fun ActionTile(
     }
 }
 
-data class Appointment(
-    val paciente: String,
-    val descripcion: String,
-    val hora: String,
-    val fecha: String
-)
+fun formatDateTime(dateTimeStr: String): Pair<String, String> {
+    return try {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+        val dateTime = LocalDateTime.parse(dateTimeStr, formatter)
+        val date = dateTime.toLocalDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+        val time = dateTime.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+        Pair(date, time)
+    } catch (e: Exception) {
+        Pair("-", "-")
+    }
+}

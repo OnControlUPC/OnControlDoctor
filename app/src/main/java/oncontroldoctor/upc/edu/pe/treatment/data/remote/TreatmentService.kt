@@ -144,4 +144,10 @@ interface TreatmentService {
         @Header("Authorization") token: String,
         @Path("patientUuid") patientUuid: String
     ): Response<List<Treatment>>
+
+    @GET("appointments/calendar")
+    suspend fun getAppointmentsCalendar(
+        @Header("Authorization") token: String
+    ): Response<List<AppointmentSimpleDto>>
+
 }

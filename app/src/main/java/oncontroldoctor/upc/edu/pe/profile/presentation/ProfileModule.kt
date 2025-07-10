@@ -7,6 +7,7 @@ import oncontroldoctor.upc.edu.pe.profile.domain.usecase.CreateDoctorProfileUseC
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorProfileUseCase
 import oncontroldoctor.upc.edu.pe.profile.domain.usecase.GetDoctorUuidUseCase
 import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.CompleteProfileViewModel
+import oncontroldoctor.upc.edu.pe.profile.presentation.viewmodel.ProfileViewModelFactory
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ServiceFactory
 
 object ProfileModule {
@@ -37,5 +38,8 @@ object ProfileModule {
             getDoctorProfileUseCase = getDoctorProfileUseCase,
             createDoctorProfileUseCase = createDoctorProfileUseCase
         )
+    }
+    fun getProfileViewModelFactory(): ProfileViewModelFactory {
+        return ProfileViewModelFactory(repository)
     }
 }

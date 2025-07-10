@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "363072497868",
+    "project_id": "oncontrol-2fa6d",
+    "storage_bucket": "oncontrol-2fa6d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363072497868:android:8fdcbec250c0bea05c3a69",
+        "android_client_info": {
+          "package_name": "oncontroldoctor.upc.edu.pe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "363072497868-mo6fs090473b1nc2nlr36c2bc7ic9ugg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUbPPICl4-u1rHiG18VNo5M5HsVJgAK5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "363072497868-mo6fs090473b1nc2nlr36c2bc7ic9ugg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

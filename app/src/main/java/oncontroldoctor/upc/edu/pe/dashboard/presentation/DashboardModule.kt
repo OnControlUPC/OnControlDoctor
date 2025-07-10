@@ -10,21 +10,31 @@ import oncontroldoctor.upc.edu.pe.dashboard.domain.usecase.GetLocalSubscriptionU
 import oncontroldoctor.upc.edu.pe.dashboard.domain.usecase.SyncSubscriptionAndPlanUseCase
 import oncontroldoctor.upc.edu.pe.dashboard.presentation.viewmodel.DashboardViewModel
 import oncontroldoctor.upc.edu.pe.shared.data.remote.ServiceFactory
+import oncontroldoctor.upc.edu.pe.treatment.data.remote.TreatmentService
+import oncontroldoctor.upc.edu.pe.treatment.data.repository.TreatmentRepositoryImpl
+import oncontroldoctor.upc.edu.pe.treatment.domain.repository.TreatmentRepository
+import oncontroldoctor.upc.edu.pe.treatment.domain.usecase.GetCalendarAppointmentsUseCase
 
 object DashboardModule {
-    fun provideService(): DashboardService{
-        return ServiceFactory.create()
-    }
-    fun provideRepository(
+
+    fun provideDashboardService(): DashboardService = ServiceFactory.create()
+    fun provideTreatmentService(): TreatmentService = ServiceFactory.create()
+
+    fun provideDashboardRepository(
         service: DashboardService,
         subscriptionDao: SubscriptionDao,
         planDao: PlanDao
-
-    ): DashboardRepository{
+    ): DashboardRepository {
         return DashboardRepositoryImpl(service, subscriptionDao, planDao)
     }
 
-    fun provideSyncUseCase(repository: DashboardRepository): SyncSubscriptionAndPlanUseCase{
+    fun provideTreatmentRepository(
+        service: TreatmentService
+    ): TreatmentRepository {
+        return TreatmentRepositoryImpl(service)
+    }
+
+    fun provideSyncUseCase(repository: DashboardRepository): SyncSubscriptionAndPlanUseCase {
         return SyncSubscriptionAndPlanUseCase(repository)
     }
 
@@ -36,17 +46,26 @@ object DashboardModule {
         return GetLocalPlanUseCase(repository)
     }
 
+    fun provideGetCalendarAppointmentsUseCase(service: TreatmentService): GetCalendarAppointmentsUseCase {
+        return GetCalendarAppointmentsUseCase(service)
+    }
+
     fun provideViewModel(
         subscriptionDao: SubscriptionDao,
         planDao: PlanDao
     ): DashboardViewModel {
-        val service = provideService()
-        val repository = provideRepository(service, subscriptionDao, planDao)
+        val dashboardService = provideDashboardService()
+        val dashboardRepository = provideDashboardRepository(dashboardService, subscriptionDao, planDao)
+
+        val treatmentService = provideTreatmentService()
+        val treatmentRepository = provideTreatmentRepository(treatmentService)
 
         return DashboardViewModel(
-            syncSubscriptionAndPlanUseCase = provideSyncUseCase(repository),
-            getLocalSubscriptionUseCase = provideGetSubscriptionUseCase(repository),
-            getLocalPlanUseCase = provideGetPlanUseCase(repository)
+            syncSubscriptionAndPlanUseCase = provideSyncUseCase(dashboardRepository),
+            getLocalSubscriptionUseCase = provideGetSubscriptionUseCase(dashboardRepository),
+            getLocalPlanUseCase = provideGetPlanUseCase(dashboardRepository),
+            getCalendarAppointmentsUseCase = provideGetCalendarAppointmentsUseCase(treatmentService),
+            treatmentService = treatmentService
         )
     }
 
